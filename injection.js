@@ -40,6 +40,7 @@ function modifyCode(text) {
 
 		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity;
 		let attackTime = Date.now();
+		let chatDelay = Date.now();
 		console.log("payload loaded!");
 	`);
 
@@ -123,8 +124,9 @@ function modifyCode(text) {
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketMessage",$=>{', `
-		if(player$1 != undefined && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"])
+		if(player$1 != undefined && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now())
 		{
+			chatDelay = Date.now() + 1000;
 			setTimeout(function() {
 				ClientSocket.sendPacket(new SPacketMessage({
 					text: Math.random() + ("\\n" + chatdisablermsg[1]).repeat(20)
@@ -248,6 +250,7 @@ function modifyCode(text) {
 	addReplacement('ClientSocket.on("CPacketSpawnPlayer",$=>{const et=j.world.getPlayerById($.id);', `
 		if($.socketId === player$1.socketId && enabledModules["AntiBan"])
 		{
+			hud3D.remove(hud3D.rightArm);
 			hud3D.rightArm = undefined;
 			player$1.profile.cosmetics.skin = "GrandDad";
 			$.cosmetics.skin = "GrandDad";
