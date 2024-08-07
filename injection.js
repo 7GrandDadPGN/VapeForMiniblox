@@ -596,7 +596,6 @@ function modifyCode(text) {
 							if(box.visible)
 							{
 								const pos = entity.mesh.position;
-								console.log(box);
 								box.position.copy(new Vector3$1(pos.x, pos.y + 1, pos.z));
 							}
 						}
