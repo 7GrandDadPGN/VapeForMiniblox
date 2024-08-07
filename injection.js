@@ -109,6 +109,7 @@ function modifyCode(text) {
 			for(const [index, func] of Object.entries(tickLoop)) if(func) func();
 		}
 	`);
+	addReplacement('this.game.unleash.isEnabled("disable-ads")', 'true', true);
 	addReplacement('$.render()})', '; for(const [index, func] of Object.entries(renderTickLoop)) if(func) func();');
 	addReplacement('updateNameTag(){let$="white",et = 1;', 'this.entity.team = this.entity.profile.cosmetics.color;');
 	addReplacement('connect(_,$=!1,et=!1){', 'lastJoined = _;');
