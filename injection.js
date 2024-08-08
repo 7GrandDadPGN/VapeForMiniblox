@@ -342,7 +342,7 @@ function modifyCode(text) {
 				{
 					module.toggle();
 					game$1.chat.addChat({
-						text: args[1] + (module.enabled ? " Enabled!" : " Disabled!"),
+						text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
 						color: module.enabled ? "lime" : "red"
 					});
 				}
@@ -369,19 +369,21 @@ function modifyCode(text) {
 				if(args.length < 3)
 				{
 					let str = args[1] + " Options";
-					for(const [name, value] of Object.entries(module.options))
-					{
-						str += "\\n" + name + " : " + value[0].name + " : " + value[1];
-					}
+					for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
 					game$1.chat.addChat({text: str});
 					return;
 				}
-				const option = module.options[args[2]];
+
+				let option;
+				for(const [name, value] of Object.entries(module.options))
+				{
+					if(name.toLocaleLowerCase() == args[2].toLocaleLowerCase()) option = value;
+				}
 				if(!option) return;
 				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
 				else if(option[0] == Boolean) option[1] = args[3] == "true";
 				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + module.name + " " + args[2] + " to " + option[1]});
+				game$1.chat.addChat({text: "Set " + module.name + " " + option.name + " to " + option[1]});
 			}
 			return;
 		}
