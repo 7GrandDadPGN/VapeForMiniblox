@@ -154,7 +154,6 @@ function modifyCode(text) {
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
-		console.log($);
 		if($.rank != null && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2)
 		{
 			game$1.chat.addChat({
