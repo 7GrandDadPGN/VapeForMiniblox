@@ -49,7 +49,7 @@ function modifyCode(text) {
 			}
 		}
 
-		console.log("payload loaded!");
+		console.log("payload loaded! v1.0.0");
 	`);
 
 	// DRAWING SETUP
@@ -405,6 +405,14 @@ function modifyCode(text) {
 				}
 			}
 			return;
+		}
+
+		if(enabledModules["FilterBypass"])
+		{
+			const words = $.split(" ");
+			let newwords = [];
+			for(const word of words) newwords.push(word.charAt(0) + '‎' + word.slice(1));
+			$ = newwords.join(' ');
 		}
 	`)
 
@@ -941,6 +949,7 @@ function modifyCode(text) {
 			new Module("AutoRejoin", function() {});
 			const chatdisabler = new Module("ChatDisabler", function() {});
 			chatdisablermsg = chatdisabler.addoption("Message", String, "youtube.com/c/7GrandDadVape");
+			new Module("FilterBypass", function() {});
 
 			const survival = new Module("SurvivalMode", function(callback) {
 				if(callback)
