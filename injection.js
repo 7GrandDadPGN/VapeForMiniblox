@@ -35,6 +35,9 @@ function modifyCode(text) {
 		let enabledModules = {};
 		let modules = {};
 
+		let keybindCallbacks = {};
+		let keybindList = {};
+
 		let tickLoop = {};
 		let renderTickLoop = {};
 
@@ -49,8 +52,16 @@ function modifyCode(text) {
 			}
 		}
 
-		console.log("payload loaded! v1.0.0");
+		let j;
+		for (j = 0; j < 26; j++) keybindList[j + 65] = keybindList["Key" + String.fromCharCode(j + 65)] = String.fromCharCode(j + 97);
+		for (j = 0; j < 10; j++) keybindList[48 + j] = keybindList["Digit" + j] = "" + j;
+		window.addEventListener("keydown", function(key) {
+			const func = keybindCallbacks[keybindList[key.code]];
+			call$1(func, key);
+		});
 	`);
+
+	addReplacement('VERSION$1," | ",', '"Vape V4 v1.0.0"," | ",');
 
 	// DRAWING SETUP
 	addReplacement('ut(this,"glintTexture");', `
@@ -210,7 +221,7 @@ function modifyCode(text) {
 	addReplacement('_&&player$1.mode.isCreative()', `||enabledModules["FastBreak"]`);
 
 	// INVWALK
-	addReplacement('keyPressed(j)&&Game.isActive(!1)', 'keyPressed(j)&&(Game.isActive(!1)||enabledModules["InvWalk"])', true);
+	addReplacement('keyPressed(j)&&Game.isActive(!1)', 'keyPressed(j)&&(Game.isActive(!1)||enabledModules["InvWalk"]&&!game.chat.showInput)', true);
 
 	// AUTORESPAWN
 	addReplacement('showDeathScreen=!0,exitPointerLock())', `
@@ -435,12 +446,12 @@ function modifyCode(text) {
 					this.func(this.enabled);
 				}
 				setbind(key, manual) {
-					if(this.bind != "") keyupCallbacks[this.bind] = undefined;
+					if(this.bind != "") keybindCallbacks[this.bind] = undefined;
 					this.bind = key;
 					if(key == "") return;
 					if(manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + key + "!"});
 					const module = this;
-					keyupCallbacks[this.bind] = function(j) {
+					keybindCallbacks[this.bind] = function(j) {
 						if(Game.isActive())
 						{
 							module.toggle();
