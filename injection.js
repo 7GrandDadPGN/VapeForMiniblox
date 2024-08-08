@@ -41,6 +41,14 @@ function modifyCode(text) {
 		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity;
 		let attackTime = Date.now();
 		let chatDelay = Date.now();
+
+		function getModule(str) {
+			for(const [name, module] of Object.entries(modules))
+			{
+				if(name.toLocaleLowerCase() == str.toLocaleLowerCase()) return module;
+			}
+		}
+
 		console.log("payload loaded!");
 	`);
 
@@ -316,23 +324,26 @@ function modifyCode(text) {
 
 	// COMMANDS
 	addReplacement('tryExecuteClientside(et,_))return;', `
-		if($.startsWith(".bind"))
+		const str = $.toLocaleLowerCase();
+		if(str.startsWith(".bind"))
 		{
-			const args = $.split(" ");
-			if(args.length > 2 && modules[args[1]]) modules[args[1]].setbind(args[2], true);
+			const args = str.split(" ");
+			const module = args.length > 2 && getModule(args[1]);
+			if(module) module.setbind(args[2], true);
 			return;
 		}
-		else if ($.startsWith(".toggle"))
+		else if (str.startsWith(".toggle") || str.startsWith(".t"))
 		{
-			const args = $.split(" ");
+			const args = str.split(" ");
 			if(args.length > 1)
 			{
-				if(modules[args[1]])
+				const module = args.length > 1 && getModule(args[1]);
+				if(module)
 				{
-					modules[args[1]].toggle();
+					module.toggle();
 					game$1.chat.addChat({
-						text: args[1] + (modules[args[1]].enabled ? " Enabled!" : " Disabled!"),
-						color: modules[args[1]].enabled ? "lime" : "red"
+						text: args[1] + (module.enabled ? " Enabled!" : " Disabled!"),
+						color: module.enabled ? "lime" : "red"
 					});
 				}
 				else if(args[1] == "all")
@@ -342,40 +353,41 @@ function modifyCode(text) {
 			}
 			return;
 		}
-		else if ($.startsWith(".modules"))
+		else if (str.startsWith(".modules"))
 		{
-			let str = "Module List";
+			let str = "Module List\\n";
 			for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
 			game$1.chat.addChat({text: str});
 			return;
 		}
-		else if ($.startsWith(".setoption"))
+		else if (str.startsWith(".setoption"))
 		{
-			const args = $.split(" ");
-			if(args.length > 1 && modules[args[1]])
+			const args = str.split(" ");
+			const module = args.length > 1 && getModule(args[1]);
+			if(module)
 			{
 				if(args.length < 3)
 				{
 					let str = args[1] + " Options";
-					for(const [name, value] of Object.entries(modules[args[1]].options))
+					for(const [name, value] of Object.entries(module.options))
 					{
 						str += "\\n" + name + " : " + value[0].name + " : " + value[1];
 					}
 					game$1.chat.addChat({text: str});
 					return;
 				}
-				const option = modules[args[1]] && modules[args[1]].options[args[2]];
+				const option = module.options[args[2]];
 				if(!option) return;
 				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
 				else if(option[0] == Boolean) option[1] = args[3] == "true";
 				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + args[1] + " " + args[2] + " to " + option[1]});
+				game$1.chat.addChat({text: "Set " + module.name + " " + args[2] + " to " + option[1]});
 			}
 			return;
 		}
-		else if ($.startsWith(".profile") || $.startsWith(".config"))
+		else if (str.startsWith(".profile") || str.startsWith(".config"))
 		{
-			const args = $.split(" ");
+			const args = str.split(" ");
 			if(args.length > 1)
 			{
 				if(args[1] == "save")
