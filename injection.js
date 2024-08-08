@@ -61,7 +61,7 @@ function modifyCode(text) {
 		});
 	`);
 
-	addReplacement('VERSION$1," | ",', '"Vape V4 v1.0.1"," | ",');
+	addReplacement('VERSION$1," | ",', '"Vape V4 v1.0.2"," | ",');
 
 	// DRAWING SETUP
 	addReplacement('ut(this,"glintTexture");', `
@@ -151,6 +151,16 @@ function modifyCode(text) {
 					text: Math.random() + ("\\n" + chatdisablermsg[1]).repeat(20)
 				}));
 			}, 50);
+		}
+	`);
+	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
+		console.log($);
+		if($.rank != null && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2)
+		{
+			game$1.chat.addChat({
+				text: "STAFF DETECTED : " + $.rank + "\\n".repeat(10),
+				color: "red"
+			});
 		}
 	`);
 
