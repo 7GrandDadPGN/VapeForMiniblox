@@ -335,6 +335,9 @@ function modifyCode(text) {
 	addReplacement('this.setPosition(this.pos),this.setRotation(this.yaw,this.pitch)', `
 		if(player$1 != undefined && this.id == player$1.id) player$1.sendPositionAndRotation();
 	`);
+	addReplacement('this.setPosition(_, $, et),this.setRotation(tt, rt);', `
+		if(player$1 != undefined && this.id == player$1.id) player$1.sendPositionAndRotation();
+	`);
 
 	// KEY FIX
 	addReplacement('Object.assign(keyMap,_)', '; keyMap["Semicolon"] = "semicolon"; keyMap["Apostrophe"] = "apostrophe";');
@@ -685,11 +688,7 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						if(ticks % 5 == 0 && flybypass[1])
-						{
-							for(let i = 0; i < 5; i++) ClientSocket.sendPacket(new SPacketPlayerPosLook({onGround: false}));
-						}
-						const dir = getMoveDirection(flyvalue[1]);
+						const dir = getMoveDirection(flybypass[1] && ticks % 14 < 7 ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : (ticks % 4 < 2 ? 0.13 : -0.13));
