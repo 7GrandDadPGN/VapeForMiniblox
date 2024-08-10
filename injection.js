@@ -541,7 +541,8 @@ function modifyCode(text) {
 							ClientSocket.sendPacket(new SPacketClick({}));
 							didSwing = true;
 						}
-						const hitVec = entity.getEyePos();
+						const box = entity.getEntityBoundingBox();
+						const hitVec = player$1.getEyePos().clone().clamp(box.min, box.max);
 						attacked++;
 						playerControllerMP.syncCurrentPlayItem();
 						ClientSocket.sendPacket(new SPacketUseEntity({
