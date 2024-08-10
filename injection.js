@@ -541,15 +541,16 @@ function modifyCode(text) {
 							ClientSocket.sendPacket(new SPacketClick({}));
 							didSwing = true;
 						}
+						const hitVec = entity.getEyePos();
 						attacked++;
 						playerControllerMP.syncCurrentPlayItem();
 						ClientSocket.sendPacket(new SPacketUseEntity({
 							id: entity.id,
 							action: 1,
 							hitVec: new PBVector3({
-								x: 0,
-								y: 0,
-								z: 0
+								x: hitVec.x,
+								y: hitVec.y,
+								z: hitVec.z
 							})
 						}));
 						player$1.attackTargetEntityWithCurrentItem(entity);
