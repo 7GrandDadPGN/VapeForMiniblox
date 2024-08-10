@@ -979,14 +979,6 @@ function modifyCode(text) {
 				}
 			});
 
-			const respawn = new Module("Respawn", function(callback) {
-				if(callback)
-				{
-					if(player$1 != undefined) ClientSocket.sendPacket(new SPacketRespawn$1);
-					respawn.toggle();
-				}
-			});
-
 			globalThis.vapeModules = modules;
 			globalThis.vapeProfile = "default";
 		})();
