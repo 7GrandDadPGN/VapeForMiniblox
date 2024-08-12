@@ -149,7 +149,7 @@ function modifyCode(text) {
 		}
 
 		if($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
-			breakStart = Date.now() + 20000;
+			breakStart = Date.now() + 25000;
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
