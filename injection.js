@@ -412,7 +412,7 @@ function modifyCode(text) {
 				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
 				else if(option[0] == Boolean) option[1] = args[3] == "true";
 				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + module.name + " " + option[3] + " to " + option[1]});
+				game$1.chat.addChat({text: "Set " + module.name + " " + option[2] + " to " + option[1]});
 			}
 			return;
 		}
@@ -696,7 +696,7 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] && ticks % 11 < 4 ? flyvalue[1] : 0.48);
+						const dir = getMoveDirection(flybypass[1] && ticks % 11 < 4 ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12);
@@ -729,7 +729,7 @@ function modifyCode(text) {
 					tickLoop["Speed"] = function() {
 						lastjump++;
 						const oldMotion = new Vector3$1(player$1.motion.x, 0, player$1.motion.z);
-						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.48 : speedvalue[1]) : Math.max(oldMotion.length(), 0.48));
+						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.54 : speedvalue[1]) : Math.max(oldMotion.length(), 0.54));
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
