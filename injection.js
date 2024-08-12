@@ -42,7 +42,7 @@ function modifyCode(text) {
 		let tickLoop = {};
 		let renderTickLoop = {};
 
-		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity;
+		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity, lastTeleport;
 		let attackTime = Date.now();
 		let chatDelay = Date.now();
 
@@ -79,20 +79,19 @@ function modifyCode(text) {
 
 	addReplacement('COLOR_TOOLTIP_BG,BORDER_SIZE)}', `
 		function drawImage(ctx, img, posX, posY, sizeX, sizeY, color) {
-			if(color != undefined) {
+			if(color) {
 				ctx.fillStyle = color;
 				ctx.fillRect(posX, posY, sizeX, sizeY);
 				ctx.globalCompositeOperation = "destination-in";
 			}
 			ctx.drawImage(img, posX, posY, sizeX, sizeY);
-			if(color != undefined) ctx.globalCompositeOperation = "source-over";
+			if(color) ctx.globalCompositeOperation = "source-over";
 		}
 	`);
 
 	// TEXT GUI
 	addReplacement('(this.drawSelectedItemStack(),this.drawHintBox())', `
-		if(ctx$3 != undefined)
-		{
+		if(ctx$3) {
 			const colorOffset = (Date.now() / 4000);
 			const posX = 15;
 			const posY = 17;
@@ -103,8 +102,7 @@ function modifyCode(text) {
 
 			let offset = 0;
 			let stringList = [];
-			for(const [module, value] of Object.entries(enabledModules))
-			{
+			for(const [module, value] of Object.entries(enabledModules)) {
 				if(!value) continue;
 				stringList.push(module);
 			}
@@ -115,8 +113,7 @@ function modifyCode(text) {
 				return compA < compB ? 1 : -1;
 			});
 
-			for(const module of stringList)
-			{
+			for(const module of stringList) {
 				offset++;
 				drawText(ctx$3, module, posX + 6, posY + 12 + (18 * offset), "15px arial", \`HSL(\${((colorOffset - (0.025 * offset)) % 1) * 360}, 100%, 50%)\`, "left", "top", 1, !0);
 			}
@@ -125,8 +122,7 @@ function modifyCode(text) {
 
 	// HOOKS
 	addReplacement('+=$*rt+_*nt}', `
-		if (this == player$1)
-		{
+		if(this == player$1) {
 			for(const [index, func] of Object.entries(tickLoop)) if(func) func();
 		}
 	`);
@@ -136,16 +132,14 @@ function modifyCode(text) {
 	addReplacement('connect(_,$=!1,et=!1){', 'lastJoined = _;');
 	addReplacement('SliderOption("Render Distance ",2,8,3)', 'SliderOption("Render Distance ",2,64,3)', true);
 	addReplacement('ClientSocket.on("CPacketDisconnect",$=>{', `
-		if(enabledModules["AutoRejoin"])
-		{
+		if(enabledModules["AutoRejoin"]) {
 			setTimeout(function() {
 				j.connect(lastJoined);
 			}, 400);
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketMessage",$=>{', `
-		if(player$1 != undefined && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now())
-		{
+		if(player$1 && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now()) {
 			chatDelay = Date.now() + 1000;
 			setTimeout(function() {
 				ClientSocket.sendPacket(new SPacketMessage({
@@ -154,14 +148,12 @@ function modifyCode(text) {
 			}, 50);
 		}
 
-		if($.text && $.text.startsWith("\\\\bold\\\\How to play:"))
-		{
+		if($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
 			breakStart = Date.now() + 20000;
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
-		if($.rank != null && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2)
-		{
+		if($.rank && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2) {
 			game$1.chat.addChat({
 				text: "STAFF DETECTED : " + $.rank + "\\n".repeat(10),
 				color: "red"
@@ -178,15 +170,13 @@ function modifyCode(text) {
 
 	// VELOCITY
 	addReplacement('"CPacketEntityVelocity",$=>{const et=j.world.entities.get($.id);', `
-		if(player$1 && $.id == player$1.id && enabledModules["Velocity"])
-		{
+		if(player$1 && $.id == player$1.id && enabledModules["Velocity"]) {
 			if(velocityhori[1] == 0 && velocityvert[1] == 0) return;
 			$.motion = new Vector3$1($.motion.x * velocityhori[1], $.motion.y * velocityvert[1], $.motion.z * velocityhori[1]);
 		}
 	`);
 	addReplacement('"CPacketExplosion",$=>{', `
-		if($.playerPos != null && enabledModules["Velocity"])
-		{
+		if($.playerPos && enabledModules["Velocity"]) {
 			if(velocityhori[1] == 0 && velocityvert[1] == 0) return;
 			$.playerPos = new Vector3$1($.playerPos.x * velocityhori[1], $.playerPos.y * velocityvert[1], $.playerPos.z * velocityhori[1]);
 		}
@@ -194,11 +184,9 @@ function modifyCode(text) {
 
 	// KEEPSPRINT
 	addReplacement('tt>0&&($.addVelocity(-Math.sin(this.yaw)*tt*.5,.1,-Math.cos(this.yaw)*tt*.5),this.motion.x*=.6,this.motion.z*=.6,this.setSprinting(!1)),', `
-		if(tt > 0)
-		{
+		if(tt > 0) {
 			$.addVelocity(-Math.sin(this.yaw) * tt * .5, .1, -Math.cos(this.yaw) * tt * .5);
-			if(this != player$1 || !enabledModules["KeepSprint"])
-			{
+			if(this != player$1 || !enabledModules["KeepSprint"]) {
 				this.motion.x *= .6;
 				this.motion.z *= .6;
 				this.setSprinting(!1);
@@ -226,6 +214,9 @@ function modifyCode(text) {
 	// NOFALL
 	addReplacement('={onGround:this.onGround}', '={onGround:this.onGround&&!enabledModules["NoFall"]}', true);
 
+	// STEP
+	addReplacement('et.y=this.stepHeight;', 'et.y=(enabledModules["Step"]?1:this.stepHeight);', true);
+
 	// WTAP
 	addReplacement('this.dead||this.getHealth()<=0)return;', `
 		attackedEntity = $;
@@ -248,30 +239,24 @@ function modifyCode(text) {
 
 	// CHAMS
 	addReplacement(')&&(et.mesh.visible=this.shouldRenderEntity(et))', `
-		if(enabledModules["Chams"] && et != undefined && et.id != player$1.id)
-		{
-			for(const mesh in et.mesh.meshes)
-			{
+		if(enabledModules["Chams"] && et && et.id != player$1.id) {
+			for(const mesh in et.mesh.meshes) {
 				et.mesh.meshes[mesh].material.depthTest = false;
 				et.mesh.meshes[mesh].renderOrder = 3;
 			}
 
-			for(const mesh in et.mesh.armorMesh)
-			{
+			for(const mesh in et.mesh.armorMesh) {
 				et.mesh.armorMesh[mesh].material.depthTest = false;
 				et.mesh.armorMesh[mesh].renderOrder = 4;
 			}
 
-			if(et.mesh.capeMesh)
-			{
+			if(et.mesh.capeMesh) {
 				et.mesh.capeMesh.children[0].material.depthTest = false;
 				et.mesh.capeMesh.children[0].renderOrder = 5;
 			}
 
-			if(et.mesh.hatMesh)
-			{
-				for(const mesh of et.mesh.hatMesh.children[0].children)
-				{
+			if(et.mesh.hatMesh) {
+				for(const mesh of et.mesh.hatMesh.children[0].children) {
 					if(!mesh.material) continue;
 					mesh.material.depthTest = false;
 					mesh.renderOrder = 4;
@@ -282,8 +267,7 @@ function modifyCode(text) {
 
 	// SKIN
 	addReplacement('ClientSocket.on("CPacketSpawnPlayer",$=>{const et=j.world.getPlayerById($.id);', `
-		if($.socketId === player$1.socketId && enabledModules["AntiBan"])
-		{
+		if($.socketId === player$1.socketId && enabledModules["AntiBan"]) {
 			hud3D.remove(hud3D.rightArm);
 			hud3D.rightArm = undefined;
 			player$1.profile.cosmetics.skin = "GrandDad";
@@ -294,8 +278,7 @@ function modifyCode(text) {
 	addReplacement('bob:{id:"bob",name:"Bob",tier:0,skinny:!1},', 'GrandDad:{id:"GrandDad",name:"GrandDad",tier:2,skinny:!1},');
 	addReplacement('cloud:{id:"cloud",name:"Cloud",tier:2},', 'GrandDad:{id:"GrandDad",name:"GrandDad",tier:2},');
 	addReplacement('async downloadSkin(_){', `
-		if (_ == "GrandDad")
-		{
+		if(_ == "GrandDad") {
 			const $ = skins[_];
 			return new Promise((et, tt) => {
 				textureManager.loader.load("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/skin.png", rt => {
@@ -313,8 +296,7 @@ function modifyCode(text) {
 		}
 	`);
 	addReplacement('async downloadCape(_){', `
-		if (_ == "GrandDad")
-		{
+		if(_ == "GrandDad") {
 			const $ = capes[_];
 			return new Promise((et, tt) => {
 				textureManager.loader.load("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/cape.png", rt => {
@@ -339,6 +321,7 @@ function modifyCode(text) {
 
 	// TELEPORT FIX
 	addReplacement('player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),', `
+		lastTeleport = new Vector3$1($.x, $.y, $.z);
 		setTimeout(function() {
 			player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch);
 		}, 500);
@@ -354,15 +337,13 @@ function modifyCode(text) {
 	// COMMANDS
 	addReplacement('tryExecuteClientside(et,_))return;', `
 		const str = $.toLocaleLowerCase();
-		if(str.startsWith(".bind"))
-		{
+		if(str.startsWith(".bind")) {
 			const args = str.split(" ");
 			const module = args.length > 2 && getModule(args[1]);
 			if(module) module.setbind(args[2], true);
 			return;
 		}
-		else if (str.startsWith(".toggle") || str.startsWith(".t"))
-		{
+		else if(str.startsWith(".toggle") || str.startsWith(".t")) {
 			const args = str.split(" ");
 			if(args.length > 1)
 			{
@@ -382,22 +363,20 @@ function modifyCode(text) {
 			}
 			return;
 		}
-		else if (str.startsWith(".modules"))
-		{
+		else if(str.startsWith(".modules")) {
 			let str = "Module List\\n";
 			for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
 			game$1.chat.addChat({text: str});
 			return;
 		}
-		else if (str.startsWith(".setoption"))
-		{
+		else if(str.startsWith(".setoption")) {
 			const args = str.split(" ");
 			const module = args.length > 1 && getModule(args[1]);
 			if(module)
 			{
 				if(args.length < 3)
 				{
-					let str = args[1] + " Options";
+					let str = module.name + " Options";
 					for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
 					game$1.chat.addChat({text: str});
 					return;
@@ -416,8 +395,7 @@ function modifyCode(text) {
 			}
 			return;
 		}
-		else if (str.startsWith(".profile") || str.startsWith(".config"))
-		{
+		else if(str.startsWith(".profile") || str.startsWith(".config")) {
 			const args = str.split(" ");
 			if(args.length > 1)
 			{
@@ -436,8 +414,7 @@ function modifyCode(text) {
 			return;
 		}
 
-		if(enabledModules["FilterBypass"] && !$.startsWith('/'))
-		{
+		if(enabledModules["FilterBypass"] && !$.startsWith('/')) {
 			const words = $.split(" ");
 			let newwords = [];
 			for(const word of words) newwords.push(word.charAt(0) + '‎' + word.slice(1));
@@ -480,8 +457,7 @@ function modifyCode(text) {
 						}
 					};
 				}
-				addoption(name, typee, defaultt)
-				{
+				addoption(name, typee, defaultt) {
 					this.options[name] = [typee, defaultt, name];
 					return this.options[name];
 				}
@@ -489,11 +465,9 @@ function modifyCode(text) {
 
 			let clickDelay = Date.now();
 			new Module("AutoClicker", function(callback) {
-				if(callback)
-				{
+				if(callback) {
 					tickLoop["AutoClicker"] = function() {
-						if(clickDelay < Date.now() && playerController.key.leftClick && !player$1.isUsingItem())
-						{
+						if(clickDelay < Date.now() && playerController.key.leftClick && !player$1.isUsingItem()) {
 							playerController.leftClick();
 							clickDelay = Date.now() + 60;
 						}
@@ -511,8 +485,7 @@ function modifyCode(text) {
 				if(callback)
 				{
 					tickLoop["WTap"] = function() {
-						if(attackedEntity != undefined && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300)
-						{
+						if(attackedEntity && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300) {
 							player$1.serverSprintState = false;
 						}
 					}
@@ -537,12 +510,9 @@ function modifyCode(text) {
 					const checkYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.yaw);
 					if(first) sendYaw = Math.abs(checkYaw) > degToRad(30) && Math.abs(checkYaw) < degToRad(killauraangle[1]) ? player$1.lastReportedYaw + newYaw : false;
 
-
-					if(Math.abs(newYaw) < degToRad(30))
-					{
+					if(Math.abs(newYaw) < degToRad(30)) {
 						if((attackedPlayers[entity.id] || 0) < Date.now()) attackedPlayers[entity.id] = Date.now() + 100;
-						if(!didSwing)
-						{
+						if(!didSwing) {
 							hud3D.swingArm();
 							ClientSocket.sendPacket(new SPacketClick({}));
 							didSwing = true;
@@ -568,10 +538,8 @@ function modifyCode(text) {
 			function block() {
 				if(attackDelay < Date.now()) attackDelay = Date.now() + (Math.round(attacked / 2) * 100);
 				const item = player$1.inventory.getCurrentItem();
-				if(item != null && item.getItem() instanceof ItemSword && killaurablock[1])
-				{
-					if(!blocking)
-					{
+				if(item && item.getItem() instanceof ItemSword && killaurablock[1]) {
+					if(!blocking) {
 						playerControllerMP.syncCurrentPlayItem();
 						ClientSocket.sendPacket(new SPacketUseItem);
 						blocking = true;
@@ -581,8 +549,7 @@ function modifyCode(text) {
 
 			function unblock() {
 				const item = player$1.inventory.getCurrentItem();
-				if(blocking && item != null && item.getItem() instanceof ItemSword)
-				{
+				if(blocking && item && item.getItem() instanceof ItemSword) {
 					playerControllerMP.syncCurrentPlayItem();
 					ClientSocket.sendPacket(new SPacketPlayerAction({
 						position: BlockPos.ORIGIN.toProto(),
@@ -601,8 +568,7 @@ function modifyCode(text) {
 
 			const killaura = new Module("Killaura", function(callback) {
 				if(callback) {
-					for(let i = 0; i < 10; i++)
-					{
+					for(let i = 0; i < 10; i++) {
 						const mesh = new Mesh(new BoxGeometry(1, 2, 1));
 						mesh.material.depthTest = false;
 						mesh.material.transparent = true;
@@ -621,7 +587,7 @@ function modifyCode(text) {
 
 						attackList = [];
 						for (const entity of entities.values()) {
-							if (entity.id == player$1.id) continue;
+							if(entity.id == player$1.id) continue;
 							const newDist = localPos.distanceTo(entity.pos);
 							if(newDist < killaurarange[1] && entity instanceof EntityPlayer) {
 								if(entity.mode.isSpectator() || entity.mode.isCreative()) continue;
@@ -645,8 +611,7 @@ function modifyCode(text) {
 					};
 
 					renderTickLoop["Killaura"] = function() {
-						for(let i = 0; i < boxMeshes.length; i++)
-						{
+						for(let i = 0; i < boxMeshes.length; i++) {
 							const entity = attackList[i];
 							const box = boxMeshes[i];
 							box.visible = entity != undefined && killaurabox[1];
@@ -680,7 +645,7 @@ function modifyCode(text) {
 				let moveStrafe = player$1.moveStrafe;
 				let moveForward = player$1.moveForward;
 				let speed = moveStrafe * moveStrafe + moveForward * moveForward;
-				if (speed >= 1e-4) {
+				if(speed >= 1e-4) {
 					speed = Math.sqrt(speed), speed < 1 && (speed = 1), speed = 1 / speed, moveStrafe = moveStrafe * speed, moveForward = moveForward * speed;
 					const rt = Math.cos(player$1.yaw) * moveSpeed;
 					const nt = -Math.sin(player$1.yaw) * moveSpeed;
@@ -705,8 +670,7 @@ function modifyCode(text) {
 				else
 				{
 					tickLoop["Fly"] = undefined;
-					if(player$1 != undefined)
-					{
+					if(player$1) {
 						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
 						player$1.motion.z = Math.max(Math.min(player$1.motion.z, 0.3), -0.3);
 					}
@@ -741,6 +705,8 @@ function modifyCode(text) {
 			speedvalue = speed.addoption("Speed", Number, 1.1);
 			speedjump = speed.addoption("JumpHeight", Number, 0.42);
 
+			new Module("Step", function() {});
+
 			new Module("Chams", function() {});
 			new Module("AutoRespawn", function() {});
 
@@ -753,8 +719,7 @@ function modifyCode(text) {
 						if(breakStart > Date.now()) return;
 						let offset = breakerrange[1];
 						for (const block of BlockPos.getAllInBox(new BlockPos(player$1.pos.x - offset, player$1.pos.y - offset, player$1.pos.z - offset), new BlockPos(player$1.pos.x + offset, player$1.pos.y + offset, player$1.pos.z + offset))) {
-							if(game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg)
-							{
+							if(game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg) {
 								if((attemptDelay[block] || 0) > Date.now()) continue;
 								attemptDelay[block] = Date.now() + 500;
 								ClientSocket.sendPacket(new SPacketClick({
@@ -774,13 +739,12 @@ function modifyCode(text) {
 				const item = stack.getItem();
 
 				if(item instanceof ItemSword) base = item.attackDamage;
-				else if (item instanceof ItemArmor) base = item.damageReduceAmount;
+				else if(item instanceof ItemArmor) base = item.damageReduceAmount;
 
 				const nbttaglist = stack.getEnchantmentTagList();
-				if (nbttaglist == null) return base;
+				if(nbttaglist == null) return base;
 
-				for (let i = 0; i < nbttaglist.length; ++i)
-				{
+				for (let i = 0; i < nbttaglist.length; ++i) {
 					const id = nbttaglist[i].id;
 					const lvl = nbttaglist[i].lvl;
 
@@ -798,14 +762,11 @@ function modifyCode(text) {
 			function getArmorSlot(armorSlot, slots) {
 				let returned = armorSlot;
 				let dist = 0;
-				for(let i = 0; i < 40; i++)
-				{
+				for(let i = 0; i < 40; i++) {
 					const stack = slots[i].getHasStack() ? slots[i].getStack() : null;
-					if(stack != null && stack.getItem() instanceof ItemArmor && (3 - stack.getItem().armorType) == armorSlot)
-					{
+					if(stack && stack.getItem() instanceof ItemArmor && (3 - stack.getItem().armorType) == armorSlot) {
 						const strength = getItemStrength(stack);
-						if(strength > dist)
-						{
+						if(strength > dist) {
 							returned = i;
 							dist = strength;
 						}
@@ -817,16 +778,12 @@ function modifyCode(text) {
 			new Module("AutoArmor", function(callback) {
 				if(callback) {
 					tickLoop["AutoArmor"] = function() {
-						if(player$1.openContainer == player$1.inventoryContainer)
-						{
-							for(let i = 0; i < 4; i++)
-							{
+						if(player$1.openContainer == player$1.inventoryContainer) {
+							for(let i = 0; i < 4; i++) {
 								const slots = player$1.inventoryContainer.inventorySlots;
 								const slot = getArmorSlot(i, slots);
-								if(slot != i)
-								{
-									if(slots[i].getHasStack())
-									{
+								if(slot != i) {
+									if(slots[i].getHasStack()) {
 										playerController.windowClick(player$1.openContainer.windowId, i, 0, 0, player$1);
 										playerController.windowClick(player$1.openContainer.windowId, -999, 0, 0, player$1);
 									}
@@ -841,8 +798,7 @@ function modifyCode(text) {
 
 			function craftRecipe(recipe)
 			{
-				if(canCraftItem(player$1.inventory, recipe))
-				{
+				if(canCraftItem(player$1.inventory, recipe)) {
 					craftItem(player$1.inventory, recipe, false);
 					ClientSocket.sendPacket(new SPacketCraftItem({
 						data: JSON.stringify({
@@ -858,8 +814,7 @@ function modifyCode(text) {
 			new Module("AutoCraft", function(callback) {
 				if(callback) {
 					tickLoop["AutoCraft"] = function() {
-						if(checkDelay < Date.now() && player$1.openContainer == player$1.inventoryContainer)
-						{
+						if(checkDelay < Date.now() && player$1.openContainer == player$1.inventoryContainer) {
 							checkDelay = Date.now() + 300;
 							if(!player$1.inventory.hasItem(Items.emerald_sword)) craftRecipe(recipes[1101][0]);
 						}
@@ -871,14 +826,11 @@ function modifyCode(text) {
 			new Module("ChestSteal", function(callback) {
 				if(callback) {
 					tickLoop["ChestSteal"] = function() {
-						if(player$1.openContainer != undefined && player$1.openContainer instanceof ContainerChest)
-						{
-							for(let i = 0; i < player$1.openContainer.numRows * 9; i++)
-							{
+						if(player$1.openContainer && player$1.openContainer instanceof ContainerChest) {
+							for(let i = 0; i < player$1.openContainer.numRows * 9; i++) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
-								if(item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold))
-								{
+								if(item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
 									playerController.windowClick(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
@@ -891,8 +843,7 @@ function modifyCode(text) {
 			let oldHeld;
 
 			function getPossibleSides(pos) {
-				for(const side of EnumFacing.VALUES)
-				{
+				for(const side of EnumFacing.VALUES) {
 					const state = game$1.world.getBlockState(pos.add(side.toVector().x, side.toVector().y, side.toVector().z));
 					if(state.getBlock().material != Materials.air) return side.getOpposite();
 				}
@@ -905,37 +856,32 @@ function modifyCode(text) {
 
 			new Module("Scaffold", function(callback) {
 				if(callback) {
-					if(player$1 != undefined) oldHeld = player$1.inventory.currentItem;
+					if(player$1) oldHeld = game$1.info.selectedSlot;
 					tickLoop["Scaffold"] = function() {
-						for(let i = 0; i < 9; i++)
-						{
+						for(let i = 0; i < 9; i++) {
 							const item = player$1.inventory.main[i];
-							if(item != null && item.item instanceof ItemBlock)
-							{
+							if(item && item.item instanceof ItemBlock) {
 								switchSlot(i);
 								break;
 							}
 						}
 
 						const item = player$1.inventory.getCurrentItem();
-						if(item != null && item.getItem() instanceof ItemBlock)
-						{
+						if(item && item.getItem() instanceof ItemBlock) {
 							let placeSide;
 							let pos = new BlockPos(player$1.pos.x, player$1.pos.y - 1, player$1.pos.z);
-							if(game$1.world.getBlockState(pos).getBlock().material == Materials.air)
-							{
+							if(game$1.world.getBlockState(pos).getBlock().material == Materials.air) {
 								placeSide = getPossibleSides(pos);
-								if(!placeSide)
-								{
+								if(!placeSide) {
 									let closestSide, closestPos;
 									let closest = 999;
 									for(let x = -5; x < 5; ++x) {
 										for (let z = -5; z < 5; ++z) {
 											const newPos = new BlockPos(pos.x + x, pos.y, pos.z + z);
 											const checkNearby = getPossibleSides(newPos);
-											if (checkNearby) {
+											if(checkNearby) {
 												const newDist = player$1.pos.distanceTo(new Vector3$1(newPos.x, newPos.y, newPos.z));
-												if (newDist <= closest) {
+												if(newDist <= closest) {
 													closest = newDist;
 													closestSide = checkNearby;
 													closestPos = newPos;
@@ -944,20 +890,18 @@ function modifyCode(text) {
 										}
 									}
 
-									if(closestPos)
-									{
+									if(closestPos) {
 										pos = closestPos;
 										placeSide = closestSide;
 									}
 								}
 							}
 
-							if(placeSide)
-							{
+							if(placeSide) {
 								const dir = placeSide.getOpposite().toVector();
 								const placePosition = new BlockPos(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);
 								if(playerController.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
-								if (item.stackSize == 0) {
+								if(item.stackSize == 0) {
 									player$1.inventory.main[player$1.inventory.currentItem] = null;
 									return;
 								}
@@ -967,7 +911,7 @@ function modifyCode(text) {
 				}
 				else
 				{
-					if(player$1 != undefined && oldHeld) switchSlot(oldHeld);
+					if(player$1 && oldHeld != undefined) switchSlot(oldHeld);
 					tickLoop["Scaffold"] = undefined;
 				}
 			});
@@ -980,10 +924,16 @@ function modifyCode(text) {
 			new Module("FilterBypass", function() {});
 
 			const survival = new Module("SurvivalMode", function(callback) {
-				if(callback)
-				{
-					if(player$1 != undefined) player$1.setGamemode(GameMode.fromId("survival"));
+				if(callback) {
+					if(player$1) player$1.setGamemode(GameMode.fromId("survival"));
 					survival.toggle();
+				}
+			});
+
+			const resync = new Module("Resync", function(callback) {
+				if(callback) {
+					if(player$1 && lastTeleport) player$1.setPosition(lastTeleport);
+					resync.toggle();
 				}
 			});
 
