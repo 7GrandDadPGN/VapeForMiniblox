@@ -9,6 +9,45 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        unsafeWindow
-// @require      https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/injection.js
 // @run-at       document-start
 // ==/UserScript==
+
+(function() {
+	'use strict';
+
+	async function execute(url) {
+		let data = await fetch("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/injection.js").then(e => e.text());
+		eval(data.replace("scripturl", url));
+	}
+
+	// https://stackoverflow.com/questions/22141205/intercept-and-alter-a-sites-javascript-using-greasemonkey
+	if(navigator.userAgent.indexOf("Firefox") != -1)
+	{
+		window.addEventListener("beforescriptexecute", function(e) {
+			if(e.target.src.includes("https://miniblox.io/assets/index"))
+			{
+				e.preventDefault();
+				e.stopPropagation();
+				execute(e.target.src);
+			}
+		}, false);
+	}
+	else
+	{
+		new MutationObserver(async (mutations, observer) => {
+			let oldScript = mutations
+				.flatMap(e => [...e.addedNodes])
+				.filter(e => e.tagName == 'SCRIPT')
+				.find(e => e.src.includes("https://miniblox.io/assets/index"));
+
+			if (oldScript) {
+				observer.disconnect();
+				oldScript.remove();
+				execute(oldScript.src);
+			}
+		}).observe(document, {
+			childList: true,
+			subtree: true,
+		});
+	}
+})();

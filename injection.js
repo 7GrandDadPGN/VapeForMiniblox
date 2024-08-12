@@ -412,7 +412,7 @@ function modifyCode(text) {
 				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
 				else if(option[0] == Boolean) option[1] = args[3] == "true";
 				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + module.name + " " + args[2] + " to " + option[1]});
+				game$1.chat.addChat({text: "Set " + module.name + " " + option[3] + " to " + option[1]});
 			}
 			return;
 		}
@@ -482,7 +482,7 @@ function modifyCode(text) {
 				}
 				addoption(name, typee, defaultt)
 				{
-					this.options[name] = [typee, defaultt];
+					this.options[name] = [typee, defaultt, name];
 					return this.options[name];
 				}
 			}
@@ -1058,34 +1058,5 @@ function modifyCode(text) {
 		}, 10000);
 	}
 
-	// https://stackoverflow.com/questions/22141205/intercept-and-alter-a-sites-javascript-using-greasemonkey
-	if(navigator.userAgent.indexOf("Firefox") != -1)
-	{
-		window.addEventListener("beforescriptexecute", function(e) {
-			if(e.target.src.includes("https://miniblox.io/assets/index"))
-			{
-				e.preventDefault();
-				e.stopPropagation();
-				execute(e.target.src);
-			}
-		}, false);
-	}
-	else
-	{
-		new MutationObserver(async (mutations, observer) => {
-			let oldScript = mutations
-				.flatMap(e => [...e.addedNodes])
-				.filter(e => e.tagName == 'SCRIPT')
-				.find(e => e.src.includes("https://miniblox.io/assets/index"));
-
-			if (oldScript) {
-				observer.disconnect();
-				oldScript.remove();
-				execute(oldScript.src);
-			}
-		}).observe(document, {
-			childList: true,
-			subtree: true,
-		});
-	}
+	execute("scripturl");
 })();
