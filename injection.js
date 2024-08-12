@@ -412,7 +412,7 @@ function modifyCode(text) {
 				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
 				else if(option[0] == Boolean) option[1] = args[3] == "true";
 				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + module.name + " " + name + " to " + option[1]});
+				game$1.chat.addChat({text: "Set " + module.name + " " + args[2] + " to " + option[1]});
 			}
 			return;
 		}
