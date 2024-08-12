@@ -31,6 +31,7 @@ function modifyCode(text) {
 	addReplacement('PotionHelper.potionAmplifiers.set(Potions.jump.getId(),"5");', `
 		let blocking = false;
 		let sendYaw = false;
+		let breakStart = Date.now();
 
 		let enabledModules = {};
 		let modules = {};
@@ -151,6 +152,11 @@ function modifyCode(text) {
 					text: Math.random() + ("\\n" + chatdisablermsg[1]).repeat(20)
 				}));
 			}, 50);
+		}
+
+		if($.text && $.text.startsWith("\\\\bold\\\\How to play:"))
+		{
+			breakStart = Date.now() + 20000;
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
@@ -332,12 +338,12 @@ function modifyCode(text) {
 	addReplacement('new SPacketLoginStart({requestedUuid:localStorage.getItem(REQUESTED_UUID_KEY)??void 0,session:localStorage.getItem(SESSION_TOKEN_KEY)??"",hydration:localStorage.getItem("hydration")??"0",metricsId:localStorage.getItem("metrics_id")??"",clientVersion:VERSION$1})', 'new SPacketLoginStart({requestedUuid:void 0,session:(enabledModules["AntiBan"] ? "" : (localStorage.getItem(SESSION_TOKEN_KEY) ?? "")),hydration:"0",metricsId:"",clientVersion:VERSION$1})', true);
 
 	// TELEPORT FIX
-	addReplacement('this.setPosition(this.pos),this.setRotation(this.yaw,this.pitch)', `
-		if(player$1 != undefined && this.id == player$1.id) player$1.sendPositionAndRotation();
-	`);
-	addReplacement('this.setPosition(_, $, et),this.setRotation(tt, rt);', `
-		if(player$1 != undefined && this.id == player$1.id) player$1.sendPositionAndRotation();
-	`);
+	addReplacement('player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),', `
+		setTimeout(function() {
+			player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch);
+		}, 500);
+		player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),
+	`, true);
 
 	// KEY FIX
 	addReplacement('Object.assign(keyMap,_)', '; keyMap["Semicolon"] = "semicolon"; keyMap["Apostrophe"] = "apostrophe";');
@@ -690,10 +696,10 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(0.36);
+						const dir = getMoveDirection(flybypass[1] && ticks % 11 < 4 ? flyvalue[1] : 0.48);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : (0.42 - 0.084 * (ticks % 11)));
+						player$1.motion.y = keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12);
 					};
 				}
 				else
@@ -719,11 +725,11 @@ function modifyCode(text) {
 			let speedvalue, speedjump;
 			const speed = new Module("Speed", function(callback) {
 				if(callback) {
-					let lastjump = 0;
+					let lastjump = 10;
 					tickLoop["Speed"] = function() {
 						lastjump++;
 						const oldMotion = new Vector3$1(player$1.motion.x, 0, player$1.motion.z);
-						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.36 : speedvalue[1]) : Math.max(oldMotion.length(), 0.36));
+						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.48 : speedvalue[1]) : Math.max(oldMotion.length(), 0.48));
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
@@ -744,6 +750,7 @@ function modifyCode(text) {
 				if(callback) {
 					let attemptDelay = {};
 					tickLoop["Breaker"] = function() {
+						if(breakStart > Date.now()) return;
 						let offset = breakerrange[1];
 						for (const block of BlockPos.getAllInBox(new BlockPos(player$1.pos.x - offset, player$1.pos.y - offset, player$1.pos.z - offset), new BlockPos(player$1.pos.x + offset, player$1.pos.y + offset, player$1.pos.z + offset))) {
 							if(game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg)
