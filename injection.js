@@ -1,13 +1,30 @@
 let replacements = {};
+let dumpedVarNames = {};
 
 function addReplacement(replacement, code, replaceit) {
 	replacements[replacement] = [code, replaceit];
 }
 
+function addDump(replacement, code) {
+	dumpedVarNames[replacement] = code;
+}
+
 function modifyCode(text) {
+	for(const [name, regex] of Object.entries(dumpedVarNames)){
+		const matched = text.match(regex);
+		if(matched) {
+			console.log(name, regex, matched);
+			for(const [replacement, code] of Object.entries(replacements)){
+				delete replacements[replacement];
+				replacements[replacement.replaceAll(name, matched[1])] = [code[0].replaceAll(name, matched[1]), code[1]];
+			}
+		}
+	}
+
 	for(const [replacement, code] of Object.entries(replacements)){
 		text = text.replaceAll(replacement, code[1] ? code[0] : replacement + code[0]);
 	}
+
 	var newScript = document.createElement("script");
 	newScript.type = "module";
 	newScript.crossOrigin = "";
@@ -16,11 +33,18 @@ function modifyCode(text) {
 	head.appendChild(newScript);
 }
 
-// MOVE FORWARD : DRpGFSPlnp
-// MOVE SIDEWAYS : SNzqFmhjha
-
 (function() {
 	'use strict';
+
+	// DUMPING
+	addDump('moveStrafeDump', 'strafe:this\.([a-zA-Z]*)');
+	addDump('moveForwardDump', 'forward:this\.([a-zA-Z]*)');
+	addDump('keyPressedDump', 'function ([a-zA-Z]*)\\(j\\)\{return keyPressed\\(j\\)');
+	addDump('entitiesDump', 'this\.([a-zA-Z]*)\.values\\(\\)\\)nt instanceof EntityTNTPrimed');
+	addDump('isInvisibleDump', 'ot\.([a-zA-Z]*)\\(\\)\\)&&\\(pt=new Box3');
+	addDump('attackDump', 'hitVec.z\}\\)\}\\)\\),player\\$1\.([a-zA-Z]*)');
+	addDump('lastReportedYawDump', 'this\.([a-zA-Z]*)=this\.yaw,this\.last');
+	addDump('windowClickDump', 'playerController\\$1\.([a-zA-Z]*)\\(this\.inventorySlots');
 
 	// PRE
 	addReplacement('document.addEventListener("DOMContentLoaded",startGame,!1);', `
@@ -74,7 +98,7 @@ function modifyCode(text) {
 		ut(this, "vapeTexture");
 		ut(this, "v4Texture");
 	`);
-	addReplacement('this.gltfManager.loadModels()', ',this.loadVape()');
+	addReplacement('.loadModels()', ',this.loadVape()');
 	addReplacement('ShaderManager.addShaderToMaterialWorld(this.materialTransparentWorld)}', `
 		async loadVape() {
 			this.vapeTexture = await this.loader.loadAsync("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/logo.png");
@@ -181,10 +205,10 @@ function modifyCode(text) {
 	addReplacement('bindKeysWithDefaults("i",j=>{', 'bindKeysWithDefaults("apostrophe",j=>{', true);
 
 	// SPRINT
-	addReplacement('at=keyPressedPlayer("shift")||touchcontrols.sprinting', '||enabledModules["Sprint"]');
+	addReplacement('at=keyPressedDump("shift")||touchcontrols.sprinting', '||enabledModules["Sprint"]');
 
 	// VELOCITY
-	addReplacement('"CPacketEntityVelocity",$=>{const et=j.world.entities.get($.id);', `
+	addReplacement('"CPacketEntityVelocity",$=>{const et=j.world.entitiesDump.get($.id);', `
 		if(player$1 && $.id == player$1.id && enabledModules["Velocity"]) {
 			if(velocityhori[1] == 0 && velocityvert[1] == 0) return;
 			$.motion = new Vector3$1($.motion.x * velocityhori[1], $.motion.y * velocityvert[1], $.motion.z * velocityhori[1]);
@@ -213,13 +237,13 @@ function modifyCode(text) {
 	addReplacement('else player$1.isBlocking()?', 'else (player$1.isBlocking() || blocking)?', true);
 	addReplacement('this.entity.isBlocking()', '(this.entity.isBlocking() || this.entity == player$1 && blocking)', true);
 	addReplacement('const nt={onGround:this.onGround}', `, realYaw = sendYaw || this.yaw`);
-	addReplacement('this.yaw-this.lastReportedYaw!==0', 'realYaw-this.lastReportedYaw!==0', true);
+	addReplacement('this.yaw-this.', 'realYaw-this.', true);
 	addReplacement('nt.yaw=player.yaw', 'nt.yaw=realYaw', true);
-	addReplacement('this.lastReportedYaw=this.yaw', 'this.lastReportedYaw=realYaw', true);
+	addReplacement('this.lastReportedYawDump=this.yaw,', 'this.lastReportedYawDump=realYaw,', true);
 	addReplacement('this.neck.rotation.y=controls$1.yaw', 'this.neck.rotation.y=(sendYaw||controls$1.yaw)', true);
 
 	// NOSLOWDOWN
-	addReplacement('const $=this.jumping,et=this.sneak,tt=-.8,rt=this.DRpGFSPlnp<=tt;', `
+	addReplacement('const $=this.jumping,et=this.sneak,tt=-.8,rt=this.moveForwardDump<=tt;', `
 		const slowdownCheck = this.isUsingItem() && !enabledModules["NoSlowdown"];
 	`);
 	addReplacement('updatePlayerMoveState(),this.isUsingItem()', 'updatePlayerMoveState(),slowdownCheck', true);
@@ -512,15 +536,21 @@ function modifyCode(text) {
 			let boxMeshes = [];
 			let killaurarange, killaurablock, killaurabox, killauraangle, killaurawall;
 
+			function wrapAngleTo180_radians(j) {
+				return j = j % (2 * Math.PI),
+				j >= Math.PI && (j -= 2 * Math.PI),
+				j < -Math.PI && (j += 2 * Math.PI),
+				j
+			}
+
 			function killauraAttack(entity, first)
 			{
 				if(attackDelay < Date.now())
 				{
 					const aimPos = player$1.pos.clone().sub(entity.pos);
-					const newYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.lastReportedYaw);
+					const newYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.lastReportedYawDump);
 					const checkYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.yaw);
-					if(first) sendYaw = Math.abs(checkYaw) > degToRad(30) && Math.abs(checkYaw) < degToRad(killauraangle[1]) ? player$1.lastReportedYaw + newYaw : false;
-
+					if(first) sendYaw = Math.abs(checkYaw) > degToRad(30) && Math.abs(checkYaw) < degToRad(killauraangle[1]) ? player$1.lastReportedYawDump + newYaw : false;
 					if(Math.abs(newYaw) < degToRad(30)) {
 						if((attackedPlayers[entity.id] || 0) < Date.now()) attackedPlayers[entity.id] = Date.now() + 100;
 						if(!didSwing) {
@@ -541,7 +571,7 @@ function modifyCode(text) {
 								z: hitVec.z
 							})
 						}));
-						player$1.attackTargetEntityWithCurrentItem(entity);
+						player$1.attackDump(entity);
 					}
 				}
 			}
@@ -592,16 +622,16 @@ function modifyCode(text) {
 					tickLoop["Killaura"] = function() {
 						attacked = 0;
 						didSwing = false;
-						const localPos = controls.eyePos.clone();
+						const localPos = controls.position.clone();
 						const localTeam = getTeam(player$1);
-						const entities = game$1.world.entities;
+						const entities = game$1.world.entitiesDump;
 
 						attackList = [];
 						for (const entity of entities.values()) {
 							if(entity.id == player$1.id) continue;
 							const newDist = localPos.distanceTo(entity.pos);
 							if(newDist < killaurarange[1] && entity instanceof EntityPlayer) {
-								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.bEkasjWWnO()) continue;
+								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
 								if(localTeam && localTeam == getTeam(entity)) continue;
 								if(killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
 								attackList.push(entity);
@@ -653,8 +683,8 @@ function modifyCode(text) {
 			new Module("FastBreak", function() {});
 
 			function getMoveDirection(moveSpeed) {
-				let moveStrafe = player$1.SNzqFmhjha;
-				let moveForward = player$1.DRpGFSPlnp;
+				let moveStrafe = player$1.moveStrafeDump;
+				let moveForward = player$1.moveForwardDump;
 				let speed = moveStrafe * moveStrafe + moveForward * moveForward;
 				if(speed >= 1e-4) {
 					speed = Math.sqrt(speed), speed < 1 && (speed = 1), speed = 1 / speed, moveStrafe = moveStrafe * speed, moveForward = moveForward * speed;
@@ -676,7 +706,7 @@ function modifyCode(text) {
 						const dir = getMoveDirection(flybypass[1] ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = ticks % 30 < 21 ? (keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12)) : -0.28;
+						player$1.motion.y = ticks % 30 < 21 ? (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0.12)) : -0.28;
 					};
 				}
 				else
@@ -797,10 +827,10 @@ function modifyCode(text) {
 								const slot = getArmorSlot(i, slots);
 								if(slot != i) {
 									if(slots[i].getHasStack()) {
-										playerController.windowClick(player$1.openContainer.windowId, i, 0, 0, player$1);
-										playerController.windowClick(player$1.openContainer.windowId, -999, 0, 0, player$1);
+										playerController.windowClickDump(player$1.openContainer.windowId, i, 0, 0, player$1);
+										playerController.windowClickDump(player$1.openContainer.windowId, -999, 0, 0, player$1);
 									}
-									playerController.windowClick(player$1.openContainer.windowId, slot, 0, 1, player$1);
+									playerController.windowClickDump(player$1.openContainer.windowId, slot, 0, 1, player$1);
 								}
 							}
 						}
@@ -819,7 +849,7 @@ function modifyCode(text) {
 							shiftDown: false
 						})
 					}));
-					playerController.windowClick(player$1.openContainer.windowId, 36, 0, 0, player$1);
+					playerController.windowClickDump(player$1.openContainer.windowId, 36, 0, 0, player$1);
 				}
 			}
 
@@ -844,7 +874,7 @@ function modifyCode(text) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
 								if(item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
-									playerController.windowClick(player$1.openContainer.windowId, i, 0, 1, player$1);
+									playerController.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
 						}
