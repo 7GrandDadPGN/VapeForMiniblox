@@ -28,7 +28,7 @@ function modifyCode(text) {
 		}, 0);
 	`);
 
-	addReplacement('PotionHelper.potionAmplifiers.set(Potions.jump.getId(),"5");', `
+	addReplacement('Potions.jump.getId(),"5");', `
 		let blocking = false;
 		let sendYaw = false;
 		let breakStart = Date.now();
@@ -666,10 +666,11 @@ function modifyCode(text) {
 			let flyvalue, flyvert, flybypass;
 			const fly = new Module("Fly", function(callback) {
 				if(callback) {
+					ClientSocket.sendPacket(new SPacketPlayerPosLook({pos: {x: player$1.pos.x, y: player$1.pos.y - 0.1, z: player$1.pos.z}, onGround: false}));
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] ? (noMove > Date.now() ? 0.01 : flyvalue[1]) : 0.54);
+						const dir = getMoveDirection(flybypass[1] ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = ticks % 30 < 21 ? (keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12)) : -0.28;
