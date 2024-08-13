@@ -63,6 +63,7 @@ function modifyCode(text) {
 	`);
 
 	addReplacement('VERSION$1," | ",', '"Vape V4 v1.0.3"," | ",');
+	addReplacement('if(!nt.canConnect){', 'nt.errorMessage = nt.errorMessage == "Could not join server. You are connected to a VPN or proxy. Please disconnect from it and refresh the page." ? "You have been IP Banned for Cheating" : nt.errorMessage;');
 
 	// DRAWING SETUP
 	addReplacement('ut(this,"glintTexture");', `
