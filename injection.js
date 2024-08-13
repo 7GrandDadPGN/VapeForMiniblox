@@ -230,9 +230,8 @@ function modifyCode(text) {
 	addReplacement('keyPressed(j)&&Game.isActive(!1)', 'keyPressed(j)&&(Game.isActive(!1)||enabledModules["InvWalk"]&&!game.chat.showInput)', true);
 
 	// AUTORESPAWN
-	addReplacement('showDeathScreen=!0,exitPointerLock())', `
-		if(this.showDeathScreen && enabledModules["AutoRespawn"])
-		{
+	addReplacement('this.game.info.showSignEditor=null,exitPointerLock())', `
+		if(this.showDeathScreen && enabledModules["AutoRespawn"]) {
 			ClientSocket.sendPacket(new SPacketRespawn$1);
 		}
 	`);
@@ -340,7 +339,7 @@ function modifyCode(text) {
 		if(str.startsWith(".bind")) {
 			const args = str.split(" ");
 			const module = args.length > 2 && getModule(args[1]);
-			if(module) module.setbind(args[2], true);
+			if(module) module.setbind(args[2] == "none" ? "" : args[2], true);
 			return;
 		}
 		else if(str.startsWith(".toggle") || str.startsWith(".t")) {
@@ -443,8 +442,8 @@ function modifyCode(text) {
 				setbind(key, manual) {
 					if(this.bind != "") keybindCallbacks[this.bind] = undefined;
 					this.bind = key;
+					if(manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + (key == "" ? "none" : key) + "!"});
 					if(key == "") return;
-					if(manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + key + "!"});
 					const module = this;
 					keybindCallbacks[this.bind] = function(j) {
 						if(Game.isActive())
@@ -590,7 +589,7 @@ function modifyCode(text) {
 							if(entity.id == player$1.id) continue;
 							const newDist = localPos.distanceTo(entity.pos);
 							if(newDist < killaurarange[1] && entity instanceof EntityPlayer) {
-								if(entity.mode.isSpectator() || entity.mode.isCreative()) continue;
+								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisible()) continue;
 								if(localTeam && localTeam == getTeam(entity)) continue;
 								if(killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
 								attackList.push(entity);
