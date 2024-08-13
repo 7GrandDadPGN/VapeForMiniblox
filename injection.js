@@ -42,7 +42,7 @@ function modifyCode(text) {
 		let tickLoop = {};
 		let renderTickLoop = {};
 
-		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity, lastTeleport;
+		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity, stepheight;
 		let attackTime = Date.now();
 		let chatDelay = Date.now();
 
@@ -215,7 +215,7 @@ function modifyCode(text) {
 	addReplacement('={onGround:this.onGround}', '={onGround:this.onGround&&!enabledModules["NoFall"]}', true);
 
 	// STEP
-	addReplacement('et.y=this.stepHeight;', 'et.y=(enabledModules["Step"]?1:this.stepHeight);', true);
+	addReplacement('et.y=this.stepHeight;', 'et.y=(enabledModules["Step"]?Math.max(stepheight[1],this.stepHeight):this.stepHeight);', true);
 
 	// WTAP
 	addReplacement('this.dead||this.getHealth()<=0)return;', `
@@ -317,15 +317,6 @@ function modifyCode(text) {
 
 	// LOGIN BYPASS
 	addReplacement('new SPacketLoginStart({requestedUuid:localStorage.getItem(REQUESTED_UUID_KEY)??void 0,session:localStorage.getItem(SESSION_TOKEN_KEY)??"",hydration:localStorage.getItem("hydration")??"0",metricsId:localStorage.getItem("metrics_id")??"",clientVersion:VERSION$1})', 'new SPacketLoginStart({requestedUuid:void 0,session:(enabledModules["AntiBan"] ? "" : (localStorage.getItem(SESSION_TOKEN_KEY) ?? "")),hydration:"0",metricsId:"",clientVersion:VERSION$1})', true);
-
-	// TELEPORT FIX
-	addReplacement('player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),', `
-		lastTeleport = new Vector3$1($.x, $.y, $.z);
-		setTimeout(function() {
-			player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch);
-		}, 500);
-		player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),
-	`, true);
 
 	// KEY FIX
 	addReplacement('Object.assign(keyMap,_)', '; keyMap["Semicolon"] = "semicolon"; keyMap["Apostrophe"] = "apostrophe";');
@@ -660,10 +651,10 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] && ticks % 11 < 4 ? flyvalue[1] : 0.54);
+						const dir = getMoveDirection(flybypass[1] && ticks % 100 < 40 && ticks % 11 < 4 ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12);
+						player$1.motion.y = ticks % 30 < 21 ? (keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12)) : -0.28;
 					};
 				}
 				else
@@ -692,7 +683,7 @@ function modifyCode(text) {
 					tickLoop["Speed"] = function() {
 						lastjump++;
 						const oldMotion = new Vector3$1(player$1.motion.x, 0, player$1.motion.z);
-						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.54 : speedvalue[1]) : Math.max(oldMotion.length(), 0.54));
+						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.54 : Math.min(speedvalue[1], 0.9)) : Math.max(oldMotion.length(), 0.54));
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
@@ -701,10 +692,11 @@ function modifyCode(text) {
 				}
 				else tickLoop["Speed"] = undefined;
 			});
-			speedvalue = speed.addoption("Speed", Number, 1.1);
+			speedvalue = speed.addoption("Speed", Number, 0.9);
 			speedjump = speed.addoption("JumpHeight", Number, 0.42);
 
-			new Module("Step", function() {});
+			const step = new Module("Step", function() {});
+			stepheight = step.addoption("Height", Number, 2);
 
 			new Module("Chams", function() {});
 			new Module("AutoRespawn", function() {});
@@ -929,13 +921,6 @@ function modifyCode(text) {
 				}
 			});
 
-			const resync = new Module("Resync", function(callback) {
-				if(callback) {
-					if(player$1 && lastTeleport) player$1.setPosition(lastTeleport);
-					resync.toggle();
-				}
-			});
-
 			globalThis.vapeModules = modules;
 			globalThis.vapeProfile = "default";
 		})();
@@ -1007,5 +992,42 @@ function modifyCode(text) {
 		}, 10000);
 	}
 
-	execute("scripturl");
+	const publicUrl = "scripturl";
+	// https://stackoverflow.com/questions/22141205/intercept-and-alter-a-sites-javascript-using-greasemonkey
+	if(publicUrl == "scripturl")
+	{
+		if(navigator.userAgent.indexOf("Firefox") != -1)
+		{
+			window.addEventListener("beforescriptexecute", function(e) {
+				if(e.target.src.includes("https://miniblox.io/assets/index"))
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					execute(e.target.src);
+				}
+			}, false);
+		}
+		else
+		{
+			new MutationObserver(async (mutations, observer) => {
+				let oldScript = mutations
+					.flatMap(e => [...e.addedNodes])
+					.filter(e => e.tagName == 'SCRIPT')
+					.find(e => e.src.includes("https://miniblox.io/assets/index"));
+
+				if (oldScript) {
+					observer.disconnect();
+					oldScript.remove();
+					execute(oldScript.src);
+				}
+			}).observe(document, {
+				childList: true,
+				subtree: true,
+			});
+		}
+	}
+	else
+	{
+		execute(publicUrl);
+	}
 })();
