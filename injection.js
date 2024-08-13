@@ -230,6 +230,12 @@ function modifyCode(text) {
 	// INVWALK
 	addReplacement('keyPressed(j)&&Game.isActive(!1)', 'keyPressed(j)&&(Game.isActive(!1)||enabledModules["InvWalk"]&&!game.chat.showInput)', true);
 
+	// TIMER
+	addReplacement('MSPT=50,', '', true);
+	addReplacement('MODE="production";', 'let MSPT = 50;');
+	addReplacement('ut(this,"controller");', 'ut(this, "tickLoop");');
+	addReplacement('setInterval(()=>this.fixedUpdate(),MSPT)', 'this.tickLoop=setInterval(()=>this.fixedUpdate(),MSPT)', true);
+
 	// AUTORESPAWN
 	addReplacement('this.game.info.showSignEditor=null,exitPointerLock())', `
 		if(this.showDeathScreen && enabledModules["AutoRespawn"]) {
@@ -581,7 +587,7 @@ function modifyCode(text) {
 							if(entity.id == player$1.id) continue;
 							const newDist = localPos.distanceTo(entity.pos);
 							if(newDist < killaurarange[1] && entity instanceof EntityPlayer) {
-								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisible()) continue;
+								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.bEkasjWWnO()) continue;
 								if(localTeam && localTeam == getTeam(entity)) continue;
 								if(killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
 								attackList.push(entity);
@@ -907,6 +913,20 @@ function modifyCode(text) {
 					tickLoop["Scaffold"] = undefined;
 				}
 			});
+
+			function reloadTickLoop(value) {
+				if(game$1.tickLoop) {
+					MSPT = value;
+					clearInterval(game$1.tickLoop);
+					game$1.tickLoop = setInterval(() => game$1.fixedUpdate(), MSPT);
+				}
+			}
+
+			let timervalue;
+			const timer = new Module("Timer", function(callback) {
+				reloadTickLoop(callback ? 50 / timervalue[1] : 50);
+			});
+			timervalue = timer.addoption("Value", Number, 1.2);
 
 			const antiban = new Module("AntiBan", function() {});
 			antiban.toggle();
