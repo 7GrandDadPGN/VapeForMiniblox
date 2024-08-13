@@ -651,7 +651,7 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] && ticks % 100 < 40 && ticks % 11 < 4 ? flyvalue[1] : 0.54);
+						const dir = getMoveDirection(flybypass[1] && ticks % 100 < 30 && ticks % 11 < 4 ? flyvalue[1] : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = ticks % 30 < 21 ? (keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12)) : -0.28;
