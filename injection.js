@@ -16,6 +16,9 @@ function modifyCode(text) {
 	head.appendChild(newScript);
 }
 
+// MOVE FORWARD : DRpGFSPlnp
+// MOVE SIDEWAYS : SNzqFmhjha
+
 (function() {
 	'use strict';
 
@@ -650,8 +653,8 @@ function modifyCode(text) {
 			new Module("FastBreak", function() {});
 
 			function getMoveDirection(moveSpeed) {
-				let moveStrafe = player$1.moveStrafe;
-				let moveForward = player$1.moveForward;
+				let moveStrafe = player$1.SNzqFmhjha;
+				let moveForward = player$1.DRpGFSPlnp;
 				let speed = moveStrafe * moveStrafe + moveForward * moveForward;
 				if(speed >= 1e-4) {
 					speed = Math.sqrt(speed), speed < 1 && (speed = 1), speed = 1 / speed, moveStrafe = moveStrafe * speed, moveForward = moveForward * speed;
