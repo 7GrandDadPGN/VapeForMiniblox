@@ -216,7 +216,7 @@ function modifyCode(text) {
 	addReplacement('this.neck.rotation.y=controls$1.yaw', 'this.neck.rotation.y=(sendYaw||controls$1.yaw)', true);
 
 	// NOSLOWDOWN
-	addReplacement('const $=this.jumping,et=this.sneak,tt=-.8,rt=this.moveForward<=tt;', `
+	addReplacement('const $=this.jumping,et=this.sneak,tt=-.8,rt=this.DRpGFSPlnp<=tt;', `
 		const slowdownCheck = this.isUsingItem() && !enabledModules["NoSlowdown"];
 	`);
 	addReplacement('updatePlayerMoveState(),this.isUsingItem()', 'updatePlayerMoveState(),slowdownCheck', true);
