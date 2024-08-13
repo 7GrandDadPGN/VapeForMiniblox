@@ -32,6 +32,7 @@ function modifyCode(text) {
 		let blocking = false;
 		let sendYaw = false;
 		let breakStart = Date.now();
+		let noMove = Date.now();
 
 		let enabledModules = {};
 		let modules = {};
@@ -77,6 +78,12 @@ function modifyCode(text) {
 			this.v4Texture = await this.loader.loadAsync("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/logov4.png");
 		}
 	`);
+
+	// TELEPORT FIX
+	addReplacement('player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),', `
+		noMove = Date.now() + 500;
+		player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),
+	`, true);
 
 	addReplacement('COLOR_TOOLTIP_BG,BORDER_SIZE)}', `
 		function drawImage(ctx, img, posX, posY, sizeX, sizeY, color) {
@@ -151,6 +158,10 @@ function modifyCode(text) {
 
 		if($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
 			breakStart = Date.now() + 25000;
+		}
+
+		if($.text && $.text.indexOf("won the game") != -1 && $.id == undefined && enabledModules["AutoQueue"]) {
+			game$1.requestQueue();
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
@@ -658,7 +669,7 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] && ticks % 100 < 30 && ticks % 11 < 4 ? flyvalue[1] : 0.54);
+						const dir = getMoveDirection(flybypass[1] ? (noMove > Date.now() ? 0.01 : flyvalue[1]) : 0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = ticks % 30 < 21 ? (keyPressedPlayer("space") ? flyvert[1] : (keyPressedPlayer("shift") ? -flyvert[1] : 0.12)) : -0.28;
@@ -931,6 +942,7 @@ function modifyCode(text) {
 			const antiban = new Module("AntiBan", function() {});
 			antiban.toggle();
 			new Module("AutoRejoin", function() {});
+			new Module("AutoQueue", function() {});
 			const chatdisabler = new Module("ChatDisabler", function() {});
 			chatdisablermsg = chatdisabler.addoption("Message", String, "youtube.com/c/7GrandDadVape");
 			new Module("FilterBypass", function() {});
