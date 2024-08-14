@@ -44,7 +44,8 @@ function modifyCode(text) {
 	addDump('isInvisibleDump', 'ot\.([a-zA-Z]*)\\(\\)\\)&&\\(pt=new Box3');
 	addDump('attackDump', 'hitVec.z\}\\)\}\\)\\),player\\$1\.([a-zA-Z]*)');
 	addDump('lastReportedYawDump', 'this\.([a-zA-Z]*)=this\.yaw,this\.last');
-	addDump('windowClickDump', 'playerController\\$1\.([a-zA-Z]*)\\(this\.inventorySlots');
+	addDump('windowClickDump', '([a-zA-Z]*)\\(this\.inventorySlots\.windowId');
+	addDump('playerControllerDump', 'const ([a-zA-Z]*)=new PlayerController,');
 
 	// PRE
 	addReplacement('document.addEventListener("DOMContentLoaded",startGame,!1);', `
@@ -75,8 +76,7 @@ function modifyCode(text) {
 		let chatDelay = Date.now();
 
 		function getModule(str) {
-			for(const [name, module] of Object.entries(modules))
-			{
+			for(const [name, module] of Object.entries(modules)) {
 				if(name.toLocaleLowerCase() == str.toLocaleLowerCase()) return module;
 			}
 		}
@@ -332,11 +332,11 @@ function modifyCode(text) {
 						skinny: $.skinny,
 						ratio: rt.image.width / 64
 					};
-					SkinManager.createAtlasMat(nt), this.skins[_] = nt, et()
+					SkinManager.createAtlasMat(nt), this.skins[_] = nt, et();
 				}, void 0, function(rt) {
-					console.error(rt), et()
-				})
-			})
+					console.error(rt), et();
+				});
+			});
 		}
 	`);
 	addReplacement('async downloadCape(_){', `
@@ -352,11 +352,11 @@ function modifyCode(text) {
 						rankLevel: $.tier,
 						isCape: !0
 					};
-					SkinManager.createAtlasMat(nt), this.capes[_] = nt, et()
+					SkinManager.createAtlasMat(nt), this.capes[_] = nt, et();
 				}, void 0, function(rt) {
-					console.error(rt), et()
-				})
-			})
+					console.error(rt), et();
+				});
+			});
 		}
 	`);
 
@@ -372,90 +372,78 @@ function modifyCode(text) {
 	// COMMANDS
 	addReplacement('tryExecuteClientside(et,_))return;', `
 		const str = $.toLocaleLowerCase();
-		if(str.startsWith(".bind")) {
-			const args = str.split(" ");
-			const module = args.length > 2 && getModule(args[1]);
-			if(module) module.setbind(args[2] == "none" ? "" : args[2], true);
-			return;
-		}
-		else if(str.startsWith(".toggle") || str.startsWith(".t")) {
-			const args = str.split(" ");
-			if(args.length > 1)
-			{
+		const args = str.split(" ");
+		switch (args[0]) {
+			case ".bind": {
+				const module = args.length > 2 && getModule(args[1]);
+				if(module) module.setbind(args[2] == "none" ? "" : args[2], true);
+				return;
+			}
+			case ".t":
+			case ".toggle":
+				if(args.length > 1) {
+					const module = args.length > 1 && getModule(args[1]);
+					if(module) {
+						module.toggle();
+						game$1.chat.addChat({
+							text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
+							color: module.enabled ? "lime" : "red"
+						});
+					}
+					else if(args[1] == "all") {
+						for(const [name, module] of Object.entries(modules)) module.toggle();
+					}
+				}
+				return;
+			case ".modules":
+				let str = "Module List\\n";
+				for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
+				game$1.chat.addChat({text: str});
+				return;
+			case ".setoption": {
 				const module = args.length > 1 && getModule(args[1]);
-				if(module)
-				{
-					module.toggle();
-					game$1.chat.addChat({
-						text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
-						color: module.enabled ? "lime" : "red"
-					});
-				}
-				else if(args[1] == "all")
-				{
-					for(const [name, module] of Object.entries(modules)) module.toggle();
-				}
-			}
-			return;
-		}
-		else if(str.startsWith(".modules")) {
-			let str = "Module List\\n";
-			for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
-			game$1.chat.addChat({text: str});
-			return;
-		}
-		else if(str.startsWith(".setoption")) {
-			const args = str.split(" ");
-			const module = args.length > 1 && getModule(args[1]);
-			if(module)
-			{
-				if(args.length < 3)
-				{
-					let str = module.name + " Options";
-					for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
-					game$1.chat.addChat({text: str});
-					return;
-				}
+				if(module) {
+					if(args.length < 3) {
+						let str = module.name + " Options";
+						for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
+						game$1.chat.addChat({text: str});
+						return;
+					}
 
-				let option;
-				for(const [name, value] of Object.entries(module.options))
-				{
-					if(name.toLocaleLowerCase() == args[2].toLocaleLowerCase()) option = value;
+					let option;
+					for(const [name, value] of Object.entries(module.options)) {
+						if(name.toLocaleLowerCase() == args[2].toLocaleLowerCase()) option = value;
+					}
+					if(!option) return;
+					if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
+					else if(option[0] == Boolean) option[1] = args[3] == "true";
+					else if(option[0] == String) option[1] = args.slice(3).join(" ");
+					game$1.chat.addChat({text: "Set " + module.name + " " + option[2] + " to " + option[1]});
 				}
-				if(!option) return;
-				if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
-				else if(option[0] == Boolean) option[1] = args[3] == "true";
-				else if(option[0] == String) option[1] = args.slice(3).join(" ");
-				game$1.chat.addChat({text: "Set " + module.name + " " + option[2] + " to " + option[1]});
+				return;
 			}
-			return;
-		}
-		else if(str.startsWith(".profile") || str.startsWith(".config")) {
-			const args = str.split(" ");
-			if(args.length > 1)
-			{
-				if(args[1] == "save")
-				{
-					globalThis.saveVapeConfig(args[2]);
-					game$1.chat.addChat({text: "Saved config " + args[2]});
+			case ".config":
+			case ".profile":
+				if(args.length > 1) {
+					if(args[1] == "save") {
+						globalThis.saveVapeConfig(args[2]);
+						game$1.chat.addChat({text: "Saved config " + args[2]});
+					}
+					else if(args[1] == "load") {
+						globalThis.saveVapeConfig();
+						globalThis.loadVapeConfig(args[2]);
+						game$1.chat.addChat({text: "Loaded config " + args[2]});
+					}
 				}
-				else if(args[1] == "load")
-				{
-					globalThis.saveVapeConfig();
-					globalThis.loadVapeConfig(args[2]);
-					game$1.chat.addChat({text: "Loaded config " + args[2]});
-				}
-			}
-			return;
+				return;
 		}
-
 		if(enabledModules["FilterBypass"] && !$.startsWith('/')) {
 			const words = $.split(" ");
 			let newwords = [];
 			for(const word of words) newwords.push(word.charAt(0) + '‎' + word.slice(1));
 			$ = newwords.join(' ');
 		}
-	`)
+	`);
 
 	// MAIN
 	addReplacement('document.addEventListener("contextmenu",j=>j.preventDefault());', `
@@ -476,14 +464,13 @@ function modifyCode(text) {
 					this.func(this.enabled);
 				}
 				setbind(key, manual) {
-					if(this.bind != "") keybindCallbacks[this.bind] = undefined;
+					if(this.bind != "") delete keybindCallbacks[this.bind];
 					this.bind = key;
 					if(manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + (key == "" ? "none" : key) + "!"});
 					if(key == "") return;
 					const module = this;
 					keybindCallbacks[this.bind] = function(j) {
-						if(Game.isActive())
-						{
+						if(Game.isActive()) {
 							module.toggle();
 							game$1.chat.addChat({
 								text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
@@ -502,12 +489,12 @@ function modifyCode(text) {
 			new Module("AutoClicker", function(callback) {
 				if(callback) {
 					tickLoop["AutoClicker"] = function() {
-						if(clickDelay < Date.now() && playerController.key.leftClick && !player$1.isUsingItem()) {
-							playerController.leftClick();
+						if(clickDelay < Date.now() && playerControllerDump.key.leftClick && !player$1.isUsingItem()) {
+							playerControllerDump.leftClick();
 							clickDelay = Date.now() + 60;
 						}
 					}
-				} else tickLoop["AutoClicker"] = undefined;
+				} else delete tickLoop["AutoClicker"];
 			});
 
 			new Module("Sprint", function() {});
@@ -517,15 +504,14 @@ function modifyCode(text) {
 
 			// WTap
 			new Module("WTap", function(callback) {
-				if(callback)
-				{
+				if(callback) {
 					tickLoop["WTap"] = function() {
 						if(attackedEntity && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300) {
 							player$1.serverSprintState = false;
 						}
 					}
-				} else tickLoop["WTap"] = undefined;
-			})
+				} else delete tickLoop["WTap"];
+			});
 
 			// Killaura
 			let attackDelay = Date.now();
@@ -543,10 +529,8 @@ function modifyCode(text) {
 				j
 			}
 
-			function killauraAttack(entity, first)
-			{
-				if(attackDelay < Date.now())
-				{
+			function killauraAttack(entity, first) {
+				if(attackDelay < Date.now()) {
 					const aimPos = player$1.pos.clone().sub(entity.pos);
 					const newYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.lastReportedYawDump);
 					const checkYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.yaw);
@@ -656,18 +640,16 @@ function modifyCode(text) {
 							const entity = attackList[i];
 							const box = boxMeshes[i];
 							box.visible = entity != undefined && killaurabox[1];
-							if(box.visible)
-							{
+							if(box.visible) {
 								const pos = entity.mesh.position;
 								box.position.copy(new Vector3$1(pos.x, pos.y + 1, pos.z));
 							}
 						}
 					};
 				}
-				else
-				{
-					tickLoop["Killaura"] = undefined;
-					renderTickLoop["Killaura"] = undefined;
+				else {
+					delete tickLoop["Killaura"];
+					delete renderTickLoop["Killaura"];
 					for(const box of boxMeshes) box.visible = false;
 					boxMeshes.splice(boxMeshes.length);
 					sendYaw = false;
@@ -709,9 +691,8 @@ function modifyCode(text) {
 						player$1.motion.y = ticks % 30 < 21 ? (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0.12)) : -0.28;
 					};
 				}
-				else
-				{
-					tickLoop["Fly"] = undefined;
+				else {
+					delete tickLoop["Fly"];
 					if(player$1) {
 						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
 						player$1.motion.z = Math.max(Math.min(player$1.motion.z, 0.3), -0.3);
@@ -742,7 +723,7 @@ function modifyCode(text) {
 						player$1.motion.y = player$1.onGround && dir.length() > 0 ? speedjump[1] : player$1.motion.y;
 					};
 				}
-				else tickLoop["Speed"] = undefined;
+				else delete tickLoop["Speed"];
 			});
 			speedvalue = speed.addoption("Speed", Number, 0.9);
 			speedjump = speed.addoption("JumpHeight", Number, 0.42);
@@ -772,7 +753,7 @@ function modifyCode(text) {
 						}
 					}
 				}
-				else tickLoop["Breaker"] = undefined;
+				else delete tickLoop["Breaker"];
 			});
 			breakerrange = breaker.addoption("Range", Number, 10);
 
@@ -827,20 +808,19 @@ function modifyCode(text) {
 								const slot = getArmorSlot(i, slots);
 								if(slot != i) {
 									if(slots[i].getHasStack()) {
-										playerController.windowClickDump(player$1.openContainer.windowId, i, 0, 0, player$1);
-										playerController.windowClickDump(player$1.openContainer.windowId, -999, 0, 0, player$1);
+										playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 0, player$1);
+										playerControllerDump.windowClickDump(player$1.openContainer.windowId, -999, 0, 0, player$1);
 									}
-									playerController.windowClickDump(player$1.openContainer.windowId, slot, 0, 1, player$1);
+									playerControllerDump.windowClickDump(player$1.openContainer.windowId, slot, 0, 1, player$1);
 								}
 							}
 						}
 					}
 				}
-				else tickLoop["AutoArmor"] = undefined;
+				else delete tickLoop["AutoArmor"];
 			});
 
-			function craftRecipe(recipe)
-			{
+			function craftRecipe(recipe) {
 				if(canCraftItem(player$1.inventory, recipe)) {
 					craftItem(player$1.inventory, recipe, false);
 					ClientSocket.sendPacket(new SPacketCraftItem({
@@ -849,7 +829,7 @@ function modifyCode(text) {
 							shiftDown: false
 						})
 					}));
-					playerController.windowClickDump(player$1.openContainer.windowId, 36, 0, 0, player$1);
+					playerControllerDump.windowClickDump(player$1.openContainer.windowId, 36, 0, 0, player$1);
 				}
 			}
 
@@ -863,7 +843,7 @@ function modifyCode(text) {
 						}
 					}
 				}
-				else tickLoop["AutoCraft"] = undefined;
+				else delete tickLoop["AutoCraft"];
 			});
 
 			new Module("ChestSteal", function(callback) {
@@ -874,13 +854,13 @@ function modifyCode(text) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
 								if(item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
-									playerController.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
+									playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
 						}
 					}
 				}
-				else tickLoop["ChestSteal"] = undefined;
+				else delete tickLoop["ChestSteal"];
 			});
 
 			let oldHeld;
@@ -943,7 +923,7 @@ function modifyCode(text) {
 							if(placeSide) {
 								const dir = placeSide.getOpposite().toVector();
 								const placePosition = new BlockPos(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);
-								if(playerController.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
+								if(playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
 								if(item.stackSize == 0) {
 									player$1.inventory.main[player$1.inventory.currentItem] = null;
 									return;
@@ -952,10 +932,9 @@ function modifyCode(text) {
 						}
 					}
 				}
-				else
-				{
+				else {
 					if(player$1 && oldHeld != undefined) switchSlot(oldHeld);
-					tickLoop["Scaffold"] = undefined;
+					delete tickLoop["Scaffold"];
 				}
 			});
 
@@ -998,11 +977,9 @@ function modifyCode(text) {
 	async function saveVapeConfig(profile) {
 		if(!loadedConfig) return;
 		let saveList = {};
-		for(const [name, module] of Object.entries(unsafeWindow.globalThis.vapeModules))
-		{
+		for(const [name, module] of Object.entries(unsafeWindow.globalThis.vapeModules)) {
 			saveList[name] = {enabled: module.enabled, bind: module.bind, options: {}};
-			for(const [option, setting] of Object.entries(module.options))
-			{
+			for(const [option, setting] of Object.entries(module.options)) {
 				saveList[name].options[option] = setting[1];
 			}
 		}
@@ -1015,22 +992,18 @@ function modifyCode(text) {
 		const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
 		unsafeWindow.globalThis.vapeProfile = switched ?? loadedMain.profile;
 		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, "{}"));
-		if(!loaded)
-		{
+		if(!loaded) {
 			loadedConfig = true;
 			return;
 		}
 
-		for(const [name, module] of Object.entries(loaded))
-		{
+		for(const [name, module] of Object.entries(loaded)) {
 			const realModule = unsafeWindow.globalThis.vapeModules[name];
 			if(!realModule) continue;
 			if(realModule.enabled != module.enabled) realModule.toggle();
 			if(realModule.bind != module.bind) realModule.setbind(module.bind);
-			if(module.options)
-			{
-				for(const [option, setting] of Object.entries(module.options))
-				{
+			if(module.options) {
+				for(const [option, setting] of Object.entries(module.options)) {
 					const realOption = realModule.options[option];
 					if(!realOption) continue;
 					realOption[1] = setting;
@@ -1044,8 +1017,7 @@ function modifyCode(text) {
 		await fetch(src).then(e => e.text()).then(e => modifyCode(e));
 		await new Promise((resolve) => {
 			const loop = setInterval(async function() {
-				if(unsafeWindow.globalThis.vapeModules)
-				{
+				if(unsafeWindow.globalThis.vapeModules) {
 					clearInterval(loop);
 					resolve();
 				}
@@ -1061,21 +1033,17 @@ function modifyCode(text) {
 
 	const publicUrl = "scripturl";
 	// https://stackoverflow.com/questions/22141205/intercept-and-alter-a-sites-javascript-using-greasemonkey
-	if(publicUrl == "scripturl")
-	{
-		if(navigator.userAgent.indexOf("Firefox") != -1)
-		{
+	if(publicUrl == "scripturl") {
+		if(navigator.userAgent.indexOf("Firefox") != -1) {
 			window.addEventListener("beforescriptexecute", function(e) {
-				if(e.target.src.includes("https://miniblox.io/assets/index"))
-				{
+				if(e.target.src.includes("https://miniblox.io/assets/index")) {
 					e.preventDefault();
 					e.stopPropagation();
 					execute(e.target.src);
 				}
 			}, false);
 		}
-		else
-		{
+		else {
 			new MutationObserver(async (mutations, observer) => {
 				let oldScript = mutations
 					.flatMap(e => [...e.addedNodes])
@@ -1093,8 +1061,7 @@ function modifyCode(text) {
 			});
 		}
 	}
-	else
-	{
+	else {
 		execute(publicUrl);
 	}
 })();
