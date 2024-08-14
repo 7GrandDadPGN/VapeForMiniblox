@@ -12,7 +12,7 @@ function addDump(replacement, code) {
 function modifyCode(text) {
 	for(const [name, regex] of Object.entries(dumpedVarNames)){
 		const matched = text.match(regex);
-		if(matched) {
+		if (matched) {
 			console.log(name, regex, matched);
 			for(const [replacement, code] of Object.entries(replacements)){
 				delete replacements[replacement];
@@ -78,7 +78,7 @@ function modifyCode(text) {
 
 		function getModule(str) {
 			for(const [name, module] of Object.entries(modules)) {
-				if(name.toLocaleLowerCase() == str.toLocaleLowerCase()) return module;
+				if (name.toLocaleLowerCase() == str.toLocaleLowerCase()) return module;
 			}
 		}
 
@@ -115,19 +115,19 @@ function modifyCode(text) {
 
 	addReplacement('COLOR_TOOLTIP_BG,BORDER_SIZE)}', `
 		function drawImage(ctx, img, posX, posY, sizeX, sizeY, color) {
-			if(color) {
+			if (color) {
 				ctx.fillStyle = color;
 				ctx.fillRect(posX, posY, sizeX, sizeY);
 				ctx.globalCompositeOperation = "destination-in";
 			}
 			ctx.drawImage(img, posX, posY, sizeX, sizeY);
-			if(color) ctx.globalCompositeOperation = "source-over";
+			if (color) ctx.globalCompositeOperation = "source-over";
 		}
 	`);
 
 	// TEXT GUI
 	addReplacement('(this.drawSelectedItemStack(),this.drawHintBox())', `
-		if(ctx$3) {
+		if (ctx$3) {
 			const colorOffset = (Date.now() / 4000);
 			const posX = 15;
 			const posY = 17;
@@ -139,7 +139,7 @@ function modifyCode(text) {
 			let offset = 0;
 			let stringList = [];
 			for(const [module, value] of Object.entries(enabledModules)) {
-				if(!value) continue;
+				if (!value) continue;
 				stringList.push(module);
 			}
 
@@ -158,24 +158,24 @@ function modifyCode(text) {
 
 	// HOOKS
 	addReplacement('+=$*rt+_*nt}', `
-		if(this == player$1) {
-			for(const [index, func] of Object.entries(tickLoop)) if(func) func();
+		if (this == player$1) {
+			for(const [index, func] of Object.entries(tickLoop)) if (func) func();
 		}
 	`);
 	addReplacement('this.game.unleash.isEnabled("disable-ads")', 'true', true);
-	addReplacement('$.render()})', '; for(const [index, func] of Object.entries(renderTickLoop)) if(func) func();');
+	addReplacement('$.render()})', '; for(const [index, func] of Object.entries(renderTickLoop)) if (func) func();');
 	addReplacement('updateNameTag(){let$="white",et = 1;', 'this.entity.team = this.entity.profile.cosmetics.color;');
 	addReplacement('connect(_,$=!1,et=!1){', 'lastJoined = _;');
 	addReplacement('SliderOption("Render Distance ",2,8,3)', 'SliderOption("Render Distance ",2,64,3)', true);
 	addReplacement('ClientSocket.on("CPacketDisconnect",$=>{', `
-		if(enabledModules["AutoRejoin"]) {
+		if (enabledModules["AutoRejoin"]) {
 			setTimeout(function() {
 				j.connect(lastJoined);
 			}, 400);
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketMessage",$=>{', `
-		if(player$1 && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now()) {
+		if (player$1 && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now()) {
 			chatDelay = Date.now() + 1000;
 			setTimeout(function() {
 				ClientSocket.sendPacket(new SPacketMessage({
@@ -184,16 +184,16 @@ function modifyCode(text) {
 			}, 50);
 		}
 
-		if($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
+		if ($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
 			breakStart = Date.now() + 25000;
 		}
 
-		if($.text && $.text.indexOf("won the game") != -1 && $.id == undefined && enabledModules["AutoQueue"]) {
+		if ($.text && $.text.indexOf("won the game") != -1 && $.id == undefined && enabledModules["AutoQueue"]) {
 			game$1.requestQueue();
 		}
 	`);
 	addReplacement('ClientSocket.on("CPacketUpdateStatus",$=>{', `
-		if($.rank && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2) {
+		if ($.rank && $.rank != "" && RANK.LEVEL[$.rank].permLevel > 2) {
 			game$1.chat.addChat({
 				text: "STAFF DETECTED : " + $.rank + "\\n".repeat(10),
 				color: "red"
@@ -210,23 +210,23 @@ function modifyCode(text) {
 
 	// VELOCITY
 	addReplacement('"CPacketEntityVelocity",$=>{const et=j.world.entitiesDump.get($.id);', `
-		if(player$1 && $.id == player$1.id && enabledModules["Velocity"]) {
-			if(velocityhori[1] == 0 && velocityvert[1] == 0) return;
+		if (player$1 && $.id == player$1.id && enabledModules["Velocity"]) {
+			if (velocityhori[1] == 0 && velocityvert[1] == 0) return;
 			$.motion = new Vector3$1($.motion.x * velocityhori[1], $.motion.y * velocityvert[1], $.motion.z * velocityhori[1]);
 		}
 	`);
 	addReplacement('"CPacketExplosion",$=>{', `
-		if($.playerPos && enabledModules["Velocity"]) {
-			if(velocityhori[1] == 0 && velocityvert[1] == 0) return;
+		if ($.playerPos && enabledModules["Velocity"]) {
+			if (velocityhori[1] == 0 && velocityvert[1] == 0) return;
 			$.playerPos = new Vector3$1($.playerPos.x * velocityhori[1], $.playerPos.y * velocityvert[1], $.playerPos.z * velocityhori[1]);
 		}
 	`);
 
 	// KEEPSPRINT
 	addReplacement('tt>0&&($.addVelocity(-Math.sin(this.yaw)*tt*.5,.1,-Math.cos(this.yaw)*tt*.5),this.motion.x*=.6,this.motion.z*=.6,this.setSprinting(!1)),', `
-		if(tt > 0) {
+		if (tt > 0) {
 			$.addVelocity(-Math.sin(this.yaw) * tt * .5, .1, -Math.cos(this.yaw) * tt * .5);
-			if(this != player$1 || !enabledModules["KeepSprint"]) {
+			if (this != player$1 || !enabledModules["KeepSprint"]) {
 				this.motion.x *= .6;
 				this.motion.z *= .6;
 				this.setSprinting(!1);
@@ -277,14 +277,14 @@ function modifyCode(text) {
 
 	// AUTORESPAWN
 	addReplacement('this.game.info.showSignEditor=null,exitPointerLock())', `
-		if(this.showDeathScreen && enabledModules["AutoRespawn"]) {
+		if (this.showDeathScreen && enabledModules["AutoRespawn"]) {
 			ClientSocket.sendPacket(new SPacketRespawn$1);
 		}
 	`);
 
 	// CHAMS
 	addReplacement(')&&(et.mesh.visible=this.shouldRenderEntity(et))', `
-		if(enabledModules["Chams"] && et && et.id != player$1.id) {
+		if (enabledModules["Chams"] && et && et.id != player$1.id) {
 			for(const mesh in et.mesh.meshes) {
 				et.mesh.meshes[mesh].material.depthTest = false;
 				et.mesh.meshes[mesh].renderOrder = 3;
@@ -295,14 +295,14 @@ function modifyCode(text) {
 				et.mesh.armorMesh[mesh].renderOrder = 4;
 			}
 
-			if(et.mesh.capeMesh) {
+			if (et.mesh.capeMesh) {
 				et.mesh.capeMesh.children[0].material.depthTest = false;
 				et.mesh.capeMesh.children[0].renderOrder = 5;
 			}
 
-			if(et.mesh.hatMesh) {
+			if (et.mesh.hatMesh) {
 				for(const mesh of et.mesh.hatMesh.children[0].children) {
-					if(!mesh.material) continue;
+					if (!mesh.material) continue;
 					mesh.material.depthTest = false;
 					mesh.renderOrder = 4;
 				}
@@ -312,7 +312,7 @@ function modifyCode(text) {
 
 	// SKIN
 	addReplacement('ClientSocket.on("CPacketSpawnPlayer",$=>{const et=j.world.getPlayerById($.id);', `
-		if($.socketId === player$1.socketId && enabledModules["AntiBan"]) {
+		if ($.socketId === player$1.socketId && enabledModules["AntiBan"]) {
 			hud3D.remove(hud3D.rightArm);
 			hud3D.rightArm = undefined;
 			player$1.profile.cosmetics.skin = "GrandDad";
@@ -323,7 +323,7 @@ function modifyCode(text) {
 	addReplacement('bob:{id:"bob",name:"Bob",tier:0,skinny:!1},', 'GrandDad:{id:"GrandDad",name:"GrandDad",tier:2,skinny:!1},');
 	addReplacement('cloud:{id:"cloud",name:"Cloud",tier:2},', 'GrandDad:{id:"GrandDad",name:"GrandDad",tier:2},');
 	addReplacement('async downloadSkin(_){', `
-		if(_ == "GrandDad") {
+		if (_ == "GrandDad") {
 			const $ = skins[_];
 			return new Promise((et, tt) => {
 				textureManager.loader.load("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/skin.png", rt => {
@@ -341,7 +341,7 @@ function modifyCode(text) {
 		}
 	`);
 	addReplacement('async downloadCape(_){', `
-		if(_ == "GrandDad") {
+		if (_ == "GrandDad") {
 			const $ = capes[_];
 			return new Promise((et, tt) => {
 				textureManager.loader.load("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/cape.png", rt => {
@@ -374,24 +374,24 @@ function modifyCode(text) {
 	addReplacement('tryExecuteClientside(et,_))return;', `
 		const str = $.toLocaleLowerCase();
 		const args = str.split(" ");
-		switch(args[0]) {
+		switch (args[0]) {
 			case ".bind": {
 				const module = args.length > 2 && getModule(args[1]);
-				if(module) module.setbind(args[2] == "none" ? "" : args[2], true);
+				if (module) module.setbind(args[2] == "none" ? "" : args[2], true);
 				return;
 			}
 			case ".t":
 			case ".toggle":
-				if(args.length > 1) {
+				if (args.length > 1) {
 					const module = args.length > 1 && getModule(args[1]);
-					if(module) {
+					if (module) {
 						module.toggle();
 						game$1.chat.addChat({
 							text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
 							color: module.enabled ? "lime" : "red"
 						});
 					}
-					else if(args[1] == "all") {
+					else if (args[1] == "all") {
 						for(const [name, module] of Object.entries(modules)) module.toggle();
 					}
 				}
@@ -403,8 +403,8 @@ function modifyCode(text) {
 				return;
 			case ".setoption": {
 				const module = args.length > 1 && getModule(args[1]);
-				if(module) {
-					if(args.length < 3) {
+				if (module) {
+					if (args.length < 3) {
 						let str = module.name + " Options";
 						for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
 						game$1.chat.addChat({text: str});
@@ -413,20 +413,20 @@ function modifyCode(text) {
 
 					let option;
 					for(const [name, value] of Object.entries(module.options)) {
-						if(name.toLocaleLowerCase() == args[2].toLocaleLowerCase()) option = value;
+						if (name.toLocaleLowerCase() == args[2].toLocaleLowerCase()) option = value;
 					}
-					if(!option) return;
-					if(option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
-					else if(option[0] == Boolean) option[1] = args[3] == "true";
-					else if(option[0] == String) option[1] = args.slice(3).join(" ");
+					if (!option) return;
+					if (option[0] == Number) option[1] = !isNaN(Number.parseFloat(args[3])) ? Number.parseFloat(args[3]) : option[1];
+					else if (option[0] == Boolean) option[1] = args[3] == "true";
+					else if (option[0] == String) option[1] = args.slice(3).join(" ");
 					game$1.chat.addChat({text: "Set " + module.name + " " + option[2] + " to " + option[1]});
 				}
 				return;
 			}
 			case ".config":
 			case ".profile":
-				if(args.length > 1) {
-					switch(args[1]) {
+				if (args.length > 1) {
+					switch (args[1]) {
 						case "save":
 							globalThis.saveVapeConfig(args[2]);
 							game$1.chat.addChat({text: "Saved config " + args[2]});
@@ -438,17 +438,17 @@ function modifyCode(text) {
 							break;
 						case "import":
 							globalThis.importVapeConfig(args[2]);
-							game$1.chat.addChat({text: "Imported config");
+							game$1.chat.addChat({text: "Imported config"});
 							break;
 						case "export":
 							globalThis.copyVapeConfig();
-							game$1.chat.addChat({text: "Config set to clipboard!");
+							game$1.chat.addChat({text: "Config set to clipboard!"});
 							break;
 					}
 				}
 				return;
 		}
-		if(enabledModules["FilterBypass"] && !$.startsWith('/')) {
+		if (enabledModules["FilterBypass"] && !$.startsWith('/')) {
 			const words = $.split(" ");
 			let newwords = [];
 			for(const word of words) newwords.push(word.charAt(0) + '‎' + word.slice(1));
@@ -475,13 +475,13 @@ function modifyCode(text) {
 					this.func(this.enabled);
 				}
 				setbind(key, manual) {
-					if(this.bind != "") delete keybindCallbacks[this.bind];
+					if (this.bind != "") delete keybindCallbacks[this.bind];
 					this.bind = key;
-					if(manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + (key == "" ? "none" : key) + "!"});
-					if(key == "") return;
+					if (manual) game$1.chat.addChat({text: "Bound " + this.name + " to " + (key == "" ? "none" : key) + "!"});
+					if (key == "") return;
 					const module = this;
 					keybindCallbacks[this.bind] = function(j) {
-						if(Game.isActive()) {
+						if (Game.isActive()) {
 							module.toggle();
 							game$1.chat.addChat({
 								text: module.name + (module.enabled ? " Enabled!" : " Disabled!"),
@@ -498,9 +498,9 @@ function modifyCode(text) {
 
 			let clickDelay = Date.now();
 			new Module("AutoClicker", function(callback) {
-				if(callback) {
+				if (callback) {
 					tickLoop["AutoClicker"] = function() {
-						if(clickDelay < Date.now() && playerControllerDump.key.leftClick && !player$1.isUsingItem()) {
+						if (clickDelay < Date.now() && playerControllerDump.key.leftClick && !player$1.isUsingItem()) {
 							playerControllerDump.leftClick();
 							clickDelay = Date.now() + 60;
 						}
@@ -515,9 +515,9 @@ function modifyCode(text) {
 
 			// WTap
 			new Module("WTap", function(callback) {
-				if(callback) {
+				if (callback) {
 					tickLoop["WTap"] = function() {
-						if(attackedEntity && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300) {
+						if (attackedEntity && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300) {
 							player$1.serverSprintState = false;
 						}
 					}
@@ -541,14 +541,14 @@ function modifyCode(text) {
 			}
 
 			function killauraAttack(entity, first) {
-				if(attackDelay < Date.now()) {
+				if (attackDelay < Date.now()) {
 					const aimPos = player$1.pos.clone().sub(entity.pos);
 					const newYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.lastReportedYawDump);
 					const checkYaw = wrapAngleTo180_radians(Math.atan2(aimPos.x, aimPos.z) - player$1.yaw);
-					if(first) sendYaw = Math.abs(checkYaw) > degToRad(30) && Math.abs(checkYaw) < degToRad(killauraangle[1]) ? player$1.lastReportedYawDump + newYaw : false;
-					if(Math.abs(newYaw) < degToRad(30)) {
-						if((attackedPlayers[entity.id] || 0) < Date.now()) attackedPlayers[entity.id] = Date.now() + 100;
-						if(!didSwing) {
+					if (first) sendYaw = Math.abs(checkYaw) > degToRad(30) && Math.abs(checkYaw) < degToRad(killauraangle[1]) ? player$1.lastReportedYawDump + newYaw : false;
+					if (Math.abs(newYaw) < degToRad(30)) {
+						if ((attackedPlayers[entity.id] || 0) < Date.now()) attackedPlayers[entity.id] = Date.now() + 100;
+						if (!didSwing) {
 							hud3D.swingArm();
 							ClientSocket.sendPacket(new SPacketClick({}));
 							didSwing = true;
@@ -572,10 +572,10 @@ function modifyCode(text) {
 			}
 
 			function block() {
-				if(attackDelay < Date.now()) attackDelay = Date.now() + (Math.round(attacked / 2) * 100);
+				if (attackDelay < Date.now()) attackDelay = Date.now() + (Math.round(attacked / 2) * 100);
 				const item = player$1.inventory.getCurrentItem();
-				if(item && item.getItem() instanceof ItemSword && killaurablock[1]) {
-					if(!blocking) {
+				if (item && item.getItem() instanceof ItemSword && killaurablock[1]) {
+					if (!blocking) {
 						playerControllerMP.syncCurrentPlayItem();
 						ClientSocket.sendPacket(new SPacketUseItem);
 						blocking = true;
@@ -585,7 +585,7 @@ function modifyCode(text) {
 
 			function unblock() {
 				const item = player$1.inventory.getCurrentItem();
-				if(blocking && item && item.getItem() instanceof ItemSword) {
+				if (blocking && item && item.getItem() instanceof ItemSword) {
 					playerControllerMP.syncCurrentPlayItem();
 					ClientSocket.sendPacket(new SPacketPlayerAction({
 						position: BlockPos.ORIGIN.toProto(),
@@ -598,12 +598,12 @@ function modifyCode(text) {
 
 			function getTeam(entity) {
 				const entry = game$1.playerList.playerDataMap.get(entity.id);
-				if(!entry) return;
+				if (!entry) return;
 				return entry.color != "white" ? entry.color : undefined;
 			}
 
 			const killaura = new Module("Killaura", function(callback) {
-				if(callback) {
+				if (callback) {
 					for(let i = 0; i < 10; i++) {
 						const mesh = new Mesh(new BoxGeometry(1, 2, 1));
 						mesh.material.depthTest = false;
@@ -623,12 +623,12 @@ function modifyCode(text) {
 
 						attackList = [];
 						for (const entity of entities.values()) {
-							if(entity.id == player$1.id) continue;
+							if (entity.id == player$1.id) continue;
 							const newDist = localPos.distanceTo(entity.pos);
-							if(newDist < killaurarange[1] && entity instanceof EntityPlayer) {
-								if(entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
-								if(localTeam && localTeam == getTeam(entity)) continue;
-								if(killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
+							if (newDist < killaurarange[1] && entity instanceof EntityPlayer) {
+								if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
+								if (localTeam && localTeam == getTeam(entity)) continue;
+								if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
 								attackList.push(entity);
 							}
 						}
@@ -639,7 +639,7 @@ function modifyCode(text) {
 
 						for(const entity of attackList) killauraAttack(entity, attackList[0] == entity);
 
-						if(attackList.length > 0) block();
+						if (attackList.length > 0) block();
 						else {
 							unblock();
 							sendYaw = false;
@@ -651,7 +651,7 @@ function modifyCode(text) {
 							const entity = attackList[i];
 							const box = boxMeshes[i];
 							box.visible = entity != undefined && killaurabox[1];
-							if(box.visible) {
+							if (box.visible) {
 								const pos = entity.mesh.position;
 								box.position.copy(new Vector3$1(pos.x, pos.y + 1, pos.z));
 							}
@@ -679,7 +679,7 @@ function modifyCode(text) {
 				let moveStrafe = player$1.moveStrafeDump;
 				let moveForward = player$1.moveForwardDump;
 				let speed = moveStrafe * moveStrafe + moveForward * moveForward;
-				if(speed >= 1e-4) {
+				if (speed >= 1e-4) {
 					speed = Math.sqrt(speed), speed < 1 && (speed = 1), speed = 1 / speed, moveStrafe = moveStrafe * speed, moveForward = moveForward * speed;
 					const rt = Math.cos(player$1.yaw) * moveSpeed;
 					const nt = -Math.sin(player$1.yaw) * moveSpeed;
@@ -691,7 +691,7 @@ function modifyCode(text) {
 			// Fly
 			let flyvalue, flyvert, flybypass;
 			const fly = new Module("Fly", function(callback) {
-				if(callback) {
+				if (callback) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
@@ -703,7 +703,7 @@ function modifyCode(text) {
 				}
 				else {
 					delete tickLoop["Fly"];
-					if(player$1) {
+					if (player$1) {
 						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
 						player$1.motion.z = Math.max(Math.min(player$1.motion.z, 0.3), -0.3);
 					}
@@ -721,7 +721,7 @@ function modifyCode(text) {
 			// Speed
 			let speedvalue, speedjump;
 			const speed = new Module("Speed", function(callback) {
-				if(callback) {
+				if (callback) {
 					let lastjump = 10;
 					tickLoop["Speed"] = function() {
 						lastjump++;
@@ -747,14 +747,14 @@ function modifyCode(text) {
 			// Breaker
 			let breakerrange;
 			const breaker = new Module("Breaker", function(callback) {
-				if(callback) {
+				if (callback) {
 					let attemptDelay = {};
 					tickLoop["Breaker"] = function() {
-						if(breakStart > Date.now()) return;
+						if (breakStart > Date.now()) return;
 						let offset = breakerrange[1];
 						for (const block of BlockPos.getAllInBoxMutable(new BlockPos(player$1.pos.x - offset, player$1.pos.y - offset, player$1.pos.z - offset), new BlockPos(player$1.pos.x + offset, player$1.pos.y + offset, player$1.pos.z + offset))) {
-							if(game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg) {
-								if((attemptDelay[block] || 0) > Date.now()) continue;
+							if (game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg) {
+								if ((attemptDelay[block] || 0) > Date.now()) continue;
 								attemptDelay[block] = Date.now() + 500;
 								ClientSocket.sendPacket(new SPacketClick({
 									location: block
@@ -768,24 +768,24 @@ function modifyCode(text) {
 			breakerrange = breaker.addoption("Range", Number, 10);
 
 			function getItemStrength(stack) {
-				if(stack == null) return 0;
+				if (stack == null) return 0;
 				let base = 0;
 				const item = stack.getItem();
 
-				if(item instanceof ItemSword) base = item.attackDamage;
-				else if(item instanceof ItemArmor) base = item.damageReduceAmountDump;
+				if (item instanceof ItemSword) base = item.attackDamage;
+				else if (item instanceof ItemArmor) base = item.damageReduceAmountDump;
 
 				const nbttaglist = stack.getEnchantmentTagList();
-				if(nbttaglist == null) return base;
+				if (nbttaglist == null) return base;
 
 				for (let i = 0; i < nbttaglist.length; ++i) {
 					const id = nbttaglist[i].id;
 					const lvl = nbttaglist[i].lvl;
 
-					if(id == Enchantments.sharpness.effectId) base += lvl * 1.25;
-					else if(id == Enchantments.protection.effectId) base += Math.floor(((6 + lvl * lvl) / 3) * 0.75);
-					else if(id == Enchantments.efficiency.effectId) base += (lvl * lvl + 1);
-					else if(id == Enchantments.power.effectId) base += lvl;
+					if (id == Enchantments.sharpness.effectId) base += lvl * 1.25;
+					else if (id == Enchantments.protection.effectId) base += Math.floor(((6 + lvl * lvl) / 3) * 0.75);
+					else if (id == Enchantments.efficiency.effectId) base += (lvl * lvl + 1);
+					else if (id == Enchantments.power.effectId) base += lvl;
 					else base += lvl * 0.1;
 				}
 
@@ -798,9 +798,9 @@ function modifyCode(text) {
 				let dist = 0;
 				for(let i = 0; i < 40; i++) {
 					const stack = slots[i].getHasStack() ? slots[i].getStack() : null;
-					if(stack && stack.getItem() instanceof ItemArmor && (3 - stack.getItem().armorType) == armorSlot) {
+					if (stack && stack.getItem() instanceof ItemArmor && (3 - stack.getItem().armorType) == armorSlot) {
 						const strength = getItemStrength(stack);
-						if(strength > dist) {
+						if (strength > dist) {
 							returned = i;
 							dist = strength;
 						}
@@ -810,14 +810,14 @@ function modifyCode(text) {
 			}
 
 			new Module("AutoArmor", function(callback) {
-				if(callback) {
+				if (callback) {
 					tickLoop["AutoArmor"] = function() {
-						if(player$1.openContainer == player$1.inventoryContainer) {
+						if (player$1.openContainer == player$1.inventoryContainer) {
 							for(let i = 0; i < 4; i++) {
 								const slots = player$1.inventoryContainer.inventorySlots;
 								const slot = getArmorSlot(i, slots);
-								if(slot != i) {
-									if(slots[i].getHasStack()) {
+								if (slot != i) {
+									if (slots[i].getHasStack()) {
 										playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 0, player$1);
 										playerControllerDump.windowClickDump(player$1.openContainer.windowId, -999, 0, 0, player$1);
 									}
@@ -831,7 +831,7 @@ function modifyCode(text) {
 			});
 
 			function craftRecipe(recipe) {
-				if(canCraftItem(player$1.inventory, recipe)) {
+				if (canCraftItem(player$1.inventory, recipe)) {
 					craftItem(player$1.inventory, recipe, false);
 					ClientSocket.sendPacket(new SPacketCraftItem({
 						data: JSON.stringify({
@@ -845,11 +845,11 @@ function modifyCode(text) {
 
 			let checkDelay = Date.now();
 			new Module("AutoCraft", function(callback) {
-				if(callback) {
+				if (callback) {
 					tickLoop["AutoCraft"] = function() {
-						if(checkDelay < Date.now() && player$1.openContainer == player$1.inventoryContainer) {
+						if (checkDelay < Date.now() && player$1.openContainer == player$1.inventoryContainer) {
 							checkDelay = Date.now() + 300;
-							if(!player$1.inventory.hasItem(Items.emerald_sword)) craftRecipe(recipes[1101][0]);
+							if (!player$1.inventory.hasItem(Items.emerald_sword)) craftRecipe(recipes[1101][0]);
 						}
 					}
 				}
@@ -857,13 +857,13 @@ function modifyCode(text) {
 			});
 
 			new Module("ChestSteal", function(callback) {
-				if(callback) {
+				if (callback) {
 					tickLoop["ChestSteal"] = function() {
-						if(player$1.openContainer && player$1.openContainer instanceof ContainerChest) {
+						if (player$1.openContainer && player$1.openContainer instanceof ContainerChest) {
 							for(let i = 0; i < player$1.openContainer.numRows * 9; i++) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
-								if(item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
+								if (item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
 									playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
@@ -878,7 +878,7 @@ function modifyCode(text) {
 			function getPossibleSides(pos) {
 				for(const side of EnumFacing.VALUES) {
 					const state = game$1.world.getBlockState(pos.add(side.toVector().x, side.toVector().y, side.toVector().z));
-					if(state.getBlock().material != Materials.air) return side.getOpposite();
+					if (state.getBlock().material != Materials.air) return side.getOpposite();
 				}
 			}
 
@@ -888,33 +888,33 @@ function modifyCode(text) {
 			}
 
 			new Module("Scaffold", function(callback) {
-				if(callback) {
-					if(player$1) oldHeld = game$1.info.selectedSlot;
+				if (callback) {
+					if (player$1) oldHeld = game$1.info.selectedSlot;
 					tickLoop["Scaffold"] = function() {
 						for(let i = 0; i < 9; i++) {
 							const item = player$1.inventory.main[i];
-							if(item && item.item instanceof ItemBlock) {
+							if (item && item.item instanceof ItemBlock) {
 								switchSlot(i);
 								break;
 							}
 						}
 
 						const item = player$1.inventory.getCurrentItem();
-						if(item && item.getItem() instanceof ItemBlock) {
+						if (item && item.getItem() instanceof ItemBlock) {
 							let placeSide;
 							let pos = new BlockPos(player$1.pos.x, player$1.pos.y - 1, player$1.pos.z);
-							if(game$1.world.getBlockState(pos).getBlock().material == Materials.air) {
+							if (game$1.world.getBlockState(pos).getBlock().material == Materials.air) {
 								placeSide = getPossibleSides(pos);
-								if(!placeSide) {
+								if (!placeSide) {
 									let closestSide, closestPos;
 									let closest = 999;
 									for(let x = -5; x < 5; ++x) {
 										for (let z = -5; z < 5; ++z) {
 											const newPos = new BlockPos(pos.x + x, pos.y, pos.z + z);
 											const checkNearby = getPossibleSides(newPos);
-											if(checkNearby) {
+											if (checkNearby) {
 												const newDist = player$1.pos.distanceTo(new Vector3$1(newPos.x, newPos.y, newPos.z));
-												if(newDist <= closest) {
+												if (newDist <= closest) {
 													closest = newDist;
 													closestSide = checkNearby;
 													closestPos = newPos;
@@ -923,18 +923,18 @@ function modifyCode(text) {
 										}
 									}
 
-									if(closestPos) {
+									if (closestPos) {
 										pos = closestPos;
 										placeSide = closestSide;
 									}
 								}
 							}
 
-							if(placeSide) {
+							if (placeSide) {
 								const dir = placeSide.getOpposite().toVector();
 								const placePosition = new BlockPos(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);
-								if(playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
-								if(item.stackSize == 0) {
+								if (playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
+								if (item.stackSize == 0) {
 									player$1.inventory.main[player$1.inventory.currentItem] = null;
 									return;
 								}
@@ -943,13 +943,13 @@ function modifyCode(text) {
 					}
 				}
 				else {
-					if(player$1 && oldHeld != undefined) switchSlot(oldHeld);
+					if (player$1 && oldHeld != undefined) switchSlot(oldHeld);
 					delete tickLoop["Scaffold"];
 				}
 			});
 
 			function reloadTickLoop(value) {
-				if(game$1.tickLoop) {
+				if (game$1.tickLoop) {
 					MSPT = value;
 					clearInterval(game$1.tickLoop);
 					game$1.tickLoop = setInterval(() => game$1.fixedUpdate(), MSPT);
@@ -971,8 +971,8 @@ function modifyCode(text) {
 			new Module("FilterBypass", function() {});
 
 			const survival = new Module("SurvivalMode", function(callback) {
-				if(callback) {
-					if(player$1) player$1.setGamemode(GameMode.fromId("survival"));
+				if (callback) {
+					if (player$1) player$1.setGamemode(GameMode.fromId("survival"));
 					survival.toggle();
 				}
 			});
@@ -985,7 +985,7 @@ function modifyCode(text) {
 	let loadedConfig = false;
 
 	async function saveVapeConfig(profile) {
-		if(!loadedConfig) return;
+		if (!loadedConfig) return;
 		let saveList = {};
 		for(const [name, module] of Object.entries(unsafeWindow.globalThis.vapeModules)) {
 			saveList[name] = {enabled: module.enabled, bind: module.bind, options: {}};
@@ -1002,20 +1002,20 @@ function modifyCode(text) {
 		const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
 		unsafeWindow.globalThis.vapeProfile = switched ?? loadedMain.profile;
 		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, "{}"));
-		if(!loaded) {
+		if (!loaded) {
 			loadedConfig = true;
 			return;
 		}
 
 		for(const [name, module] of Object.entries(loaded)) {
 			const realModule = unsafeWindow.globalThis.vapeModules[name];
-			if(!realModule) continue;
-			if(realModule.enabled != module.enabled) realModule.toggle();
-			if(realModule.bind != module.bind) realModule.setbind(module.bind);
-			if(module.options) {
+			if (!realModule) continue;
+			if (realModule.enabled != module.enabled) realModule.toggle();
+			if (realModule.bind != module.bind) realModule.setbind(module.bind);
+			if (module.options) {
 				for(const [option, setting] of Object.entries(module.options)) {
 					const realOption = realModule.options[option];
-					if(!realOption) continue;
+					if (!realOption) continue;
 					realOption[1] = setting;
 				}
 			}
@@ -1025,7 +1025,7 @@ function modifyCode(text) {
 
 	async function importVapeConfig() {
 		const arg = await navigator.clipboard.readText();
-		if(!arg) return;
+		if (!arg) return;
 		GM_setValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, arg);
 		loadVapeConfig();
 	}
@@ -1038,7 +1038,7 @@ function modifyCode(text) {
 		await fetch(src).then(e => e.text()).then(e => modifyCode(e));
 		await new Promise((resolve) => {
 			const loop = setInterval(async function() {
-				if(unsafeWindow.globalThis.vapeModules) {
+				if (unsafeWindow.globalThis.vapeModules) {
 					clearInterval(loop);
 					resolve();
 				}
@@ -1056,10 +1056,10 @@ function modifyCode(text) {
 
 	const publicUrl = "scripturl";
 	// https://stackoverflow.com/questions/22141205/intercept-and-alter-a-sites-javascript-using-greasemonkey
-	if(publicUrl == "scripturl") {
-		if(navigator.userAgent.indexOf("Firefox") != -1) {
+	if (publicUrl == "scripturl") {
+		if (navigator.userAgent.indexOf("Firefox") != -1) {
 			window.addEventListener("beforescriptexecute", function(e) {
-				if(e.target.src.includes("https://miniblox.io/assets/index")) {
+				if (e.target.src.includes("https://miniblox.io/assets/index")) {
 					e.preventDefault();
 					e.stopPropagation();
 					execute(e.target.src);
@@ -1073,7 +1073,7 @@ function modifyCode(text) {
 					.filter(e => e.tagName == 'SCRIPT')
 					.find(e => e.src.includes("https://miniblox.io/assets/index"));
 
-				if(oldScript) {
+				if (oldScript) {
 					observer.disconnect();
 					oldScript.remove();
 					execute(oldScript.src);
