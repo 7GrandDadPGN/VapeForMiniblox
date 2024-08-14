@@ -682,14 +682,13 @@ function modifyCode(text) {
 			let flyvalue, flyvert, flybypass;
 			const fly = new Module("Fly", function(callback) {
 				if(callback) {
-					ClientSocket.sendPacket(new SPacketPlayerPosLook({pos: {x: player$1.pos.x, y: player$1.pos.y - 0.1, z: player$1.pos.z}, onGround: false}));
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] ? flyvalue[1] : 0.54);
+						const dir = getMoveDirection(0.54);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = ticks % 30 < 21 ? (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0.12)) : -0.28;
+						player$1.motion.y = (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : ticks % 3 == 0 ? 0.12 : 0));
 					};
 				}
 				else {
