@@ -743,7 +743,7 @@ function modifyCode(text) {
 					tickLoop["Breaker"] = function() {
 						if(breakStart > Date.now()) return;
 						let offset = breakerrange[1];
-						for (const block of BlockPos.getAllInBox(new BlockPos(player$1.pos.x - offset, player$1.pos.y - offset, player$1.pos.z - offset), new BlockPos(player$1.pos.x + offset, player$1.pos.y + offset, player$1.pos.z + offset))) {
+						for (const block of BlockPos.getAllInBoxMutable(new BlockPos(player$1.pos.x - offset, player$1.pos.y - offset, player$1.pos.z - offset), new BlockPos(player$1.pos.x + offset, player$1.pos.y + offset, player$1.pos.z + offset))) {
 							if(game$1.world.getBlockState(block).getBlock() instanceof BlockDragonEgg) {
 								if((attemptDelay[block] || 0) > Date.now()) continue;
 								attemptDelay[block] = Date.now() + 500;
