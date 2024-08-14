@@ -46,6 +46,7 @@ function modifyCode(text) {
 	addDump('lastReportedYawDump', 'this\.([a-zA-Z]*)=this\.yaw,this\.last');
 	addDump('windowClickDump', '([a-zA-Z]*)\\(this\.inventorySlots\.windowId');
 	addDump('playerControllerDump', 'const ([a-zA-Z]*)=new PlayerController,');
+	addDump('damageReduceAmountDump', 'ItemArmor&&\\(tt\\+\\=it\.([a-zA-Z]*)');
 
 	// PRE
 	addReplacement('document.addEventListener("DOMContentLoaded",startGame,!1);', `
@@ -763,7 +764,7 @@ function modifyCode(text) {
 				const item = stack.getItem();
 
 				if(item instanceof ItemSword) base = item.attackDamage;
-				else if(item instanceof ItemArmor) base = item.damageReduceAmount;
+				else if(item instanceof ItemArmor) base = item.damageReduceAmountDump;
 
 				const nbttaglist = stack.getEnchantmentTagList();
 				if(nbttaglist == null) return base;
