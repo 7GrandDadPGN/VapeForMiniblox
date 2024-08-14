@@ -438,9 +438,11 @@ function modifyCode(text) {
 							break;
 						case "import":
 							globalThis.importVapeConfig(args[2]);
+							game$1.chat.addChat({text: "Imported config");
 							break;
 						case "export":
 							globalThis.copyVapeConfig();
+							game$1.chat.addChat({text: "Config set to clipboard!");
 							break;
 					}
 				}
