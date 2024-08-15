@@ -690,7 +690,7 @@ function modifyCode(text) {
 						const dir = getMoveDirection(0.39);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : ticks % 3 == 0 ? 0.12 : 0));
+						player$1.motion.y = (keyPressedDump("shift") ? -flyvert[1] : (ticks < 18 && ticks % 6 < 4 ? 4 : -0.14));
 					};
 				}
 				else {
