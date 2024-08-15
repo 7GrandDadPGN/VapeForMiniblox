@@ -99,13 +99,14 @@ function modifyCode(text) {
 		ut(this, "vapeTexture");
 		ut(this, "v4Texture");
 	`);
-	addReplacement('.loadModels()', ',this.loadVape()');
-	addReplacement('ShaderManager.addShaderToMaterialWorld(this.materialTransparentWorld)}', `
+	addReplacement('skinManager.loadTextures(),', ',this.loadVape(),');
+	addReplacement('async loadSpritesheet(){', `
 		async loadVape() {
 			this.vapeTexture = await this.loader.loadAsync("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/logo.png");
 			this.v4Texture = await this.loader.loadAsync("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/assets/logov4.png");
 		}
-	`);
+		async loadSpritesheet(){
+	`, true);
 
 	// TELEPORT FIX
 	addReplacement('player$1.setPositionAndRotation($.x,$.y,$.z,$.yaw,$.pitch),', `
