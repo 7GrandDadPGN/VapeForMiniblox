@@ -514,11 +514,13 @@ function modifyCode(text) {
 			velocityvert = velocity.addoption("Vertical", Number, 0);
 
 			// WTap
+			let tapDone = Date.now();
 			new Module("WTap", function(callback) {
 				if (callback) {
 					tickLoop["WTap"] = function() {
-						if (attackedEntity && attackedEntity.hurtTime == 10 && (Date.now() - attackTime) < 300) {
+						if ((Date.now() - attackTime) < 300 && (tapDone < Date.now())) {
 							player$1.serverSprintState = false;
+							tapDone = Date.now() + 250;
 						}
 					}
 				} else delete tickLoop["WTap"];
