@@ -695,7 +695,7 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						const dir = getMoveDirection(flybypass[1] ? flyvalue[1] : 0.54);
+						const dir = getMoveDirection(0.4);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
 						player$1.motion.y = (keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : ticks % 3 == 0 ? 0.12 : 0));
@@ -726,7 +726,7 @@ function modifyCode(text) {
 					tickLoop["Speed"] = function() {
 						lastjump++;
 						const oldMotion = new Vector3$1(player$1.motion.x, 0, player$1.motion.z);
-						const dir = getMoveDirection(player$1.onGround ? (lastjump < 5 ? 0.54 : speedvalue[1]) : Math.max(oldMotion.length(), 0.54));
+						const dir = getMoveDirection(0.4);
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
