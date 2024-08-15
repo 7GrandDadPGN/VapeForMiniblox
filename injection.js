@@ -259,8 +259,7 @@ function modifyCode(text) {
 
 	// WTAP
 	addReplacement('this.dead||this.getHealth()<=0)return;', `
-		attackedEntity = $;
-		attackTime = Date.now();
+		if (enabledModules["WTap"]) player$1.serverSprintState = false;
 	`);
 
 	// FASTBREAK
@@ -514,17 +513,7 @@ function modifyCode(text) {
 			velocityvert = velocity.addoption("Vertical", Number, 0);
 
 			// WTap
-			let tapDone = Date.now();
-			new Module("WTap", function(callback) {
-				if (callback) {
-					tickLoop["WTap"] = function() {
-						if ((Date.now() - attackTime) < 300 && (tapDone < Date.now())) {
-							player$1.serverSprintState = false;
-							tapDone = Date.now() + 250;
-						}
-					}
-				} else delete tickLoop["WTap"];
-			});
+			new Module("WTap", function() {});
 
 			// Killaura
 			let attackDelay = Date.now();
@@ -626,8 +615,8 @@ function modifyCode(text) {
 						attackList = [];
 						for (const entity of entities.values()) {
 							if (entity.id == player$1.id) continue;
-							const newDist = localPos.distanceTo(entity.pos);
-							if (newDist < killaurarange[1] && entity instanceof EntityPlayer) {
+							const newDist = player$1.getDistanceSqToEntity(entity);
+							if (newDist < (killaurarange[1] * killaurarange[1]) && entity instanceof EntityPlayer) {
 								if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
 								if (localTeam && localTeam == getTeam(entity)) continue;
 								if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
