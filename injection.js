@@ -48,6 +48,7 @@ function modifyCode(text) {
 	addDump('playerControllerDump', 'const ([a-zA-Z]*)=new PlayerController,');
 	addDump('damageReduceAmountDump', 'ItemArmor&&\\(tt\\+\\=it\.([a-zA-Z]*)');
 	addDump('boxGeometryDump', 'ot=new Mesh\\(new ([a-zA-Z]*)\\(1');
+	addDump('syncItemDump', 'playerControllerMP\.([a-zA-Z]*)\\(\\),ClientSocket\.sendPacket');
 
 	// PRE
 	addReplacement('document.addEventListener("DOMContentLoaded",startGame,!1);', `
@@ -61,7 +62,6 @@ function modifyCode(text) {
 	addReplacement('Potions.jump.getId(),"5");', `
 		let blocking = false;
 		let sendYaw = false;
-		let sendY = false;
 		let breakStart = Date.now();
 		let noMove = Date.now();
 
@@ -165,7 +165,6 @@ function modifyCode(text) {
 			for(const [index, func] of Object.entries(tickLoop)) if (func) func();
 		}
 	`);
-	addReplacement('y:this.getEntityBoundingBox().min.y,', 'y:sendY != false ? sendY : this.getEntityBoundingBox().min.y,', true);
 	addReplacement('this.game.unleash.isEnabled("disable-ads")', 'true', true);
 	addReplacement('$.render()})', '; for(const [index, func] of Object.entries(renderTickLoop)) if (func) func();');
 	addReplacement('updateNameTag(){let$="white",et = 1;', 'this.entity.team = this.entity.profile.cosmetics.color;');
@@ -254,9 +253,6 @@ function modifyCode(text) {
 	addReplacement('updatePlayerMoveState(),this.isUsingItem()', 'updatePlayerMoveState(),slowdownCheck', true);
 	addReplacement('it&&!this.isUsingItem()', 'it&&!slowdownCheck', true);
 	addReplacement('0),this.sneak', ' && !enabledModules["NoSlowdown"]');
-
-	// NOFALL
-	addReplacement('={onGround:this.onGround}', '={onGround:this.onGround||(enabledModules["NoFall"]||this.fallDistance > 2.8)}', true);
 
 	// STEP
 	addReplacement('et.y=this.stepHeight;', 'et.y=(enabledModules["Step"]?Math.max(stepheight[1],this.stepHeight):this.stepHeight);', true);
@@ -551,7 +547,7 @@ function modifyCode(text) {
 						const box = entity.getEntityBoundingBox();
 						const hitVec = player$1.getEyePos().clone().clamp(box.min, box.max);
 						attacked++;
-						playerControllerMP.syncCurrentPlayItem();
+						playerControllerMP.syncItemDump();
 						ClientSocket.sendPacket(new SPacketUseEntity({
 							id: entity.id,
 							action: 1,
@@ -571,7 +567,7 @@ function modifyCode(text) {
 				const item = player$1.inventory.getCurrentItem();
 				if (item && item.getItem() instanceof ItemSword && killaurablock[1]) {
 					if (!blocking) {
-						playerControllerMP.syncCurrentPlayItem();
+						playerControllerMP.syncItemDump();
 						ClientSocket.sendPacket(new SPacketUseItem);
 						blocking = true;
 					}
@@ -581,7 +577,7 @@ function modifyCode(text) {
 			function unblock() {
 				const item = player$1.inventory.getCurrentItem();
 				if (blocking && item && item.getItem() instanceof ItemSword) {
-					playerControllerMP.syncCurrentPlayItem();
+					playerControllerMP.syncItemDump();
 					ClientSocket.sendPacket(new SPacketPlayerAction({
 						position: BlockPos.ORIGIN.toProto(),
 						facing: EnumFacing.DOWN.getIndex(),
@@ -624,7 +620,6 @@ function modifyCode(text) {
 								if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
 								if (localTeam && localTeam == getTeam(entity)) continue;
 								if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
-								if (enabledModules["Fly"]) continue;
 								attackList.push(entity);
 							}
 						}
@@ -685,21 +680,18 @@ function modifyCode(text) {
 			}
 
 			// Fly
-			let flyvalue, flyvert, flybypass;
 			const fly = new Module("Fly", function(callback) {
 				if (callback) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
-						sendY = ticks == 1 ? player$1.pos.y + 9999 : sendY - 0.27;
 						const dir = getMoveDirection(0.39);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0);
+						player$1.motion.y = (ticks % 2 == 0 ? 0.01 : -0.01);
 					};
 				}
 				else {
-					sendY = false;
 					delete tickLoop["Fly"];
 					if (player$1) {
 						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
@@ -707,13 +699,30 @@ function modifyCode(text) {
 					}
 				}
 			});
-			flybypass = fly.addoption("Bypass", Boolean, true);
-			flyvalue = fly.addoption("Speed", Number, 2);
-			flyvert = fly.addoption("Vertical", Number, 0.7);
+
+			// JumpFly
+			const jumpfly = new Module("JumpFly", function(callback) {
+				if (callback) {
+					let ticks = 0;
+					tickLoop["JumpFly"] = function() {
+						ticks++;
+						const dir = getMoveDirection(0.39);
+						player$1.motion.x = dir.x;
+						player$1.motion.z = dir.z;
+						player$1.motion.y = (ticks < 18 && ticks % 6 < 4 ? 4 : -0.27);
+					};
+				}
+				else {
+					delete tickLoop["JumpFly"];
+					if (player$1) {
+						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
+						player$1.motion.z = Math.max(Math.min(player$1.motion.z, 0.3), -0.3);
+					}
+				}
+			});
 
 			new Module("InvWalk", function() {});
 			new Module("KeepSprint", function() {});
-			new Module("NoFall", function() {});
 			new Module("NoSlowdown", function() {});
 
 			// Speed
