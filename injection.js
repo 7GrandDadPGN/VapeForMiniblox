@@ -47,6 +47,7 @@ function modifyCode(text) {
 	addDump('windowClickDump', '([a-zA-Z]*)\\(this\.inventorySlots\.windowId');
 	addDump('playerControllerDump', 'const ([a-zA-Z]*)=new PlayerController,');
 	addDump('damageReduceAmountDump', 'ItemArmor&&\\(tt\\+\\=it\.([a-zA-Z]*)');
+	addDump('boxGeometryDump', 'ot=new Mesh\\(new ([a-zA-Z]*)\\(1');
 
 	// PRE
 	addReplacement('document.addEventListener("DOMContentLoaded",startGame,!1);', `
@@ -597,7 +598,7 @@ function modifyCode(text) {
 			const killaura = new Module("Killaura", function(callback) {
 				if (callback) {
 					for(let i = 0; i < 10; i++) {
-						const mesh = new Mesh(new BoxGeometry(1, 2, 1));
+						const mesh = new Mesh(new boxGeometryDump(1, 2, 1));
 						mesh.material.depthTest = false;
 						mesh.material.transparent = true;
 						mesh.material.opacity = 0.5;
