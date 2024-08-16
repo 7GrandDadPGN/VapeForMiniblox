@@ -743,13 +743,15 @@ function modifyCode(text) {
 				if (callback) {
 					let lastjump = 10;
 					tickLoop["LongJump"] = function() {
+      						// disable after the player is off the ground
+						if (!player$1.onGround) {
+      							longJump.toggle();
+						}
 						lastjump++;
-						const oldMotion = new Vector3$1(player$1.motion.x, 0, player$1.motion.z);
 						const dir = getMoveDirection(0.39);
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.y = player$1.onGround && dir.length() > 0 ? longJumpValue : player$1.motion.y;
-						longJump.toggle();
-					};
+      					};
 				}
 				else delete tickLoop["LongJump"];
 			});
