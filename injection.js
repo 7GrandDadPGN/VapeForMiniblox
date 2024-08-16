@@ -61,6 +61,7 @@ function modifyCode(text) {
 	addReplacement('Potions.jump.getId(),"5");', `
 		let blocking = false;
 		let sendYaw = false;
+		let sendY = false;
 		let breakStart = Date.now();
 		let noMove = Date.now();
 
@@ -164,6 +165,7 @@ function modifyCode(text) {
 			for(const [index, func] of Object.entries(tickLoop)) if (func) func();
 		}
 	`);
+	addReplacement('y:this.getEntityBoundingBox().min.y,', 'y:sendY != false ? sendY : this.getEntityBoundingBox().min.y,', true);
 	addReplacement('this.game.unleash.isEnabled("disable-ads")', 'true', true);
 	addReplacement('$.render()})', '; for(const [index, func] of Object.entries(renderTickLoop)) if (func) func();');
 	addReplacement('updateNameTag(){let$="white",et = 1;', 'this.entity.team = this.entity.profile.cosmetics.color;');
@@ -622,6 +624,7 @@ function modifyCode(text) {
 								if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
 								if (localTeam && localTeam == getTeam(entity)) continue;
 								if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
+								if (enabledModules["Fly"]) continue;
 								attackList.push(entity);
 							}
 						}
@@ -688,13 +691,15 @@ function modifyCode(text) {
 					let ticks = 0;
 					tickLoop["Fly"] = function() {
 						ticks++;
+						sendY = ticks == 1 ? player$1.pos.y + 9999 : sendY - 0.27;
 						const dir = getMoveDirection(0.39);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = (keyPressedDump("shift") ? -flyvert[1] : (ticks < 18 && ticks % 6 < 4 ? 4 : -0.27));
+						player$1.motion.y = keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0);
 					};
 				}
 				else {
+					sendY = false;
 					delete tickLoop["Fly"];
 					if (player$1) {
 						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
