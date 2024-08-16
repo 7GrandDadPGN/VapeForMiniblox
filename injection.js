@@ -254,7 +254,7 @@ function modifyCode(text) {
 	addReplacement('0),this.sneak', ' && !enabledModules["NoSlowdown"]');
 
 	// NOFALL
-	addReplacement('={onGround:this.onGround}', '={onGround:this.onGround&&!enabledModules["NoFall"]}', true);
+	addReplacement('={onGround:this.onGround}', '={onGround:this.onGround||(enabledModules["NoFall"]||this.fallDistance > 2.8)}', true);
 
 	// STEP
 	addReplacement('et.y=this.stepHeight;', 'et.y=(enabledModules["Step"]?Math.max(stepheight[1],this.stepHeight):this.stepHeight);', true);
@@ -691,7 +691,7 @@ function modifyCode(text) {
 						const dir = getMoveDirection(0.39);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = (keyPressedDump("shift") ? -flyvert[1] : (ticks < 18 && ticks % 6 < 4 ? 4 : -0.14));
+						player$1.motion.y = (keyPressedDump("shift") ? -flyvert[1] : (ticks < 18 && ticks % 6 < 4 ? 4 : -0.27));
 					};
 				}
 				else {
