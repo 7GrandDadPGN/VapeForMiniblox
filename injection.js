@@ -751,6 +751,28 @@ function modifyCode(text) {
 			new Module("Chams", function() {});
 			new Module("AutoRespawn", function() {});
 
+			// Longjump (pasted from Speed)
+   			let longJumpValue;
+			const longJump = new Module("LongJump", function(callback) {
+				if (callback) {
+					let lastjump = 10;
+					tickLoop["LongJump"] = function() {
+      						// disable after the player is off the ground
+						if (!player$1.onGround) {
+      							longJump.toggle();
+						}
+						lastjump++;
+						const dir = getMoveDirection(0.39);
+						lastjump = player$1.onGround ? 0 : lastjump;
+						player$1.motion.x = dir.x;
+						player$1.motion.z = dir.z;
+						player$1.motion.y = player$1.onGround && dir.length() > 0 ? longJumpValue : player$1.motion.y;
+      					};
+				}
+				else delete tickLoop["LongJump"];
+			});
+   			longJumpValue = longJump.addoption("Value", Number, 5);
+
 			// Breaker
 			let breakerrange;
 			const breaker = new Module("Breaker", function(callback) {
