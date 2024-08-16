@@ -755,6 +755,8 @@ function modifyCode(text) {
 						lastjump++;
 						const dir = getMoveDirection(0.39);
 						lastjump = player$1.onGround ? 0 : lastjump;
+						player$1.motion.x = dir.x;
+						player$1.motion.z = dir.z;
 						player$1.motion.y = player$1.onGround && dir.length() > 0 ? longJumpValue : player$1.motion.y;
       					};
 				}
