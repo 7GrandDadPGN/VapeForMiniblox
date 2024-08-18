@@ -1,5 +1,11 @@
 let replacements = {};
 let dumpedVarNames = {};
+const saveName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+const loadName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+const importName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+const exportName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+const modulesName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+const profileName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
 
 function addReplacement(replacement, code, replaceit) {
 	replacements[replacement] = [code, replaceit];
@@ -361,7 +367,7 @@ function modifyCode(text) {
 	`);
 
 	// LOGIN BYPASS
-	addReplacement('new SPacketLoginStart({requestedUuid:localStorage.getItem(REQUESTED_UUID_KEY)??void 0,session:localStorage.getItem(SESSION_TOKEN_KEY)??"",hydration:localStorage.getItem("hydration")??"0",metricsId:localStorage.getItem("metrics_id")??"",clientVersion:VERSION$1})', 'new SPacketLoginStart({requestedUuid:void 0,session:(enabledModules["AntiBan"] ? "" : (localStorage.getItem(SESSION_TOKEN_KEY) ?? "")),hydration:"0",metricsId:"",clientVersion:VERSION$1})', true);
+	addReplacement('new SPacketLoginStart({requestedUuid:localStorage.getItem(REQUESTED_UUID_KEY)??void 0,session:localStorage.getItem(SESSION_TOKEN_KEY)??"",hydration:localStorage.getItem("hydration")??"0",metricsId:localStorage.getItem("metrics_id")??"",clientVersion:VERSION$1})', 'new SPacketLoginStart({requestedUuid:void 0,session:(enabledModules["AntiBan"] ? "" : (localStorage.getItem(SESSION_TOKEN_KEY) ?? "")),hydration:localStorage.getItem("hydration")??"0",metricsId:crypto.randomUUID(),clientVersion:VERSION$1})', true);
 
 	// KEY FIX
 	addReplacement('Object.assign(keyMap,_)', '; keyMap["Semicolon"] = "semicolon"; keyMap["Apostrophe"] = "apostrophe";');
@@ -427,20 +433,20 @@ function modifyCode(text) {
 				if (args.length > 1) {
 					switch (args[1]) {
 						case "save":
-							globalThis.saveVapeConfig(args[2]);
+							globalThis.${saveName}(args[2]);
 							game$1.chat.addChat({text: "Saved config " + args[2]});
 							break;
 						case "load":
-							globalThis.saveVapeConfig();
-							globalThis.loadVapeConfig(args[2]);
+							globalThis.${saveName}();
+							globalThis.${loadName}(args[2]);
 							game$1.chat.addChat({text: "Loaded config " + args[2]});
 							break;
 						case "import":
-							globalThis.importVapeConfig(args[2]);
+							globalThis.${importName}(args[2]);
 							game$1.chat.addChat({text: "Imported config"});
 							break;
 						case "export":
-							globalThis.copyVapeConfig();
+							globalThis.${exportName}();
 							game$1.chat.addChat({text: "Config set to clipboard!"});
 							break;
 					}
@@ -984,8 +990,8 @@ function modifyCode(text) {
 				}
 			});
 
-			globalThis.vapeModules = modules;
-			globalThis.vapeProfile = "default";
+			globalThis.${modulesName} = modules;
+			globalThis.${profileName} = "default";
 		})();
 	`);
 
@@ -994,28 +1000,28 @@ function modifyCode(text) {
 	async function saveVapeConfig(profile) {
 		if (!loadedConfig) return;
 		let saveList = {};
-		for(const [name, module] of Object.entries(unsafeWindow.globalThis.vapeModules)) {
+		for(const [name, module] of Object.entries(unsafeWindow.globalThis[modulesName])) {
 			saveList[name] = {enabled: module.enabled, bind: module.bind, options: {}};
 			for(const [option, setting] of Object.entries(module.options)) {
 				saveList[name].options[option] = setting[1];
 			}
 		}
-		GM_setValue("vapeConfig" + (profile ?? unsafeWindow.globalThis.vapeProfile), JSON.stringify(saveList));
-		GM_setValue("mainVapeConfig", JSON.stringify({profile: unsafeWindow.globalThis.vapeProfile}));
+		GM_setValue("vapeConfig" + (profile ?? unsafeWindow.globalThis[profileName]), JSON.stringify(saveList));
+		GM_setValue("mainVapeConfig", JSON.stringify({profile: unsafeWindow.globalThis[profileName]}));
 	}
 
 	async function loadVapeConfig(switched) {
 		loadedConfig = false;
 		const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
-		unsafeWindow.globalThis.vapeProfile = switched ?? loadedMain.profile;
-		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, "{}"));
+		unsafeWindow.globalThis[profileName] = switched ?? loadedMain.profile;
+		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
 		if (!loaded) {
 			loadedConfig = true;
 			return;
 		}
 
 		for(const [name, module] of Object.entries(loaded)) {
-			const realModule = unsafeWindow.globalThis.vapeModules[name];
+			const realModule = unsafeWindow.globalThis[modulesName][name];
 			if (!realModule) continue;
 			if (realModule.enabled != module.enabled) realModule.toggle();
 			if (realModule.bind != module.bind) realModule.setbind(module.bind);
@@ -1033,28 +1039,28 @@ function modifyCode(text) {
 	async function importVapeConfig() {
 		const arg = await navigator.clipboard.readText();
 		if (!arg) return;
-		GM_setValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, arg);
+		GM_setValue("vapeConfig" + unsafeWindow.globalThis[profileName], arg);
 		loadVapeConfig();
 	}
 
 	async function copyVapeConfig() {
-		navigator.clipboard.writeText(await GM_getValue("vapeConfig" + unsafeWindow.globalThis.vapeProfile, "{}"));
+		navigator.clipboard.writeText(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
 	}
 
 	async function execute(src) {
 		await fetch(src).then(e => e.text()).then(e => modifyCode(e));
 		await new Promise((resolve) => {
 			const loop = setInterval(async function() {
-				if (unsafeWindow.globalThis.vapeModules) {
+				if (unsafeWindow.globalThis[modulesName]) {
 					clearInterval(loop);
 					resolve();
 				}
 			}, 10);
 		});
-		unsafeWindow.globalThis.saveVapeConfig = saveVapeConfig;
-		unsafeWindow.globalThis.loadVapeConfig = loadVapeConfig;
-		unsafeWindow.globalThis.copyVapeConfig = copyVapeConfig;
-		unsafeWindow.globalThis.importVapeConfig = importVapeConfig;
+		unsafeWindow.globalThis[saveName] = saveVapeConfig;
+		unsafeWindow.globalThis[loadName] = loadVapeConfig;
+		unsafeWindow.globalThis[exportName] = copyVapeConfig;
+		unsafeWindow.globalThis[importName] = importVapeConfig;
 		loadVapeConfig();
 		setInterval(async function() {
 			saveVapeConfig();
