@@ -1053,8 +1053,10 @@ function modifyCode(text) {
 		navigator.clipboard.writeText(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
 	}
 
-	async function execute(src) {
+	async function execute(src, oldScript) {
+		if (oldScript) oldScript.type = 'javascript/blocked';
 		await fetch(src).then(e => e.text()).then(e => modifyCode(e));
+		if (oldScript) oldScript.type = 'module';
 		await new Promise((resolve) => {
 			const loop = setInterval(async function() {
 				if (unsafeWindow.globalThis[modulesName]) {
@@ -1094,8 +1096,7 @@ function modifyCode(text) {
 
 				if (oldScript) {
 					observer.disconnect();
-					oldScript.remove();
-					execute(oldScript.src);
+					execute(oldScript.src, oldScript);
 				}
 			}).observe(document, {
 				childList: true,

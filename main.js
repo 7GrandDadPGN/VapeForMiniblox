@@ -15,8 +15,10 @@
 (function() {
 	'use strict';
 
-	async function execute(url) {
+	async function execute(url, oldScript) {
+		if (oldScript) oldScript.type = 'javascript/blocked';
 		let data = await fetch("https://raw.githubusercontent.com/7GrandDadPGN/VapeForMiniblox/main/injection.js").then(e => e.text());
+		if (oldScript) oldScript.type = 'module';
 		eval(data.replace("scripturl", url));
 	}
 
@@ -42,8 +44,7 @@
 
 			if (oldScript) {
 				observer.disconnect();
-				oldScript.remove();
-				execute(oldScript.src);
+				execute(oldScript.src, oldScript);
 			}
 		}).observe(document, {
 			childList: true,
