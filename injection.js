@@ -19,7 +19,7 @@ Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, 
 	return result;
 });
 Object.getOwnPropertyDescriptors = replaceAndCopyFunction(Object.getOwnPropertyDescriptors, function(result) {
-	if (result.indexOf(storeName) != 1) result.splice(result.indexOf(storeName), 1);
+	delete result[storeName];
 	return result;
 });
 
