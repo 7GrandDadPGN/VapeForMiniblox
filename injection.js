@@ -1060,11 +1060,11 @@ function modifyCode(text) {
 			const arg = await navigator.clipboard.readText();
 			if (!arg) return;
 			GM_setValue("vapeConfig" + unsafeWindow.globalThis[profileName], arg);
-			loadVapeConfig();
+			unsafeWindow.globalThis[loadName]();
 		};
-		loadVapeConfig();
+		unsafeWindow.globalThis[loadName]();
 		setInterval(async function() {
-			saveVapeConfig();
+			unsafeWindow.globalThis[saveName]();
 		}, 10000);
 	}
 
