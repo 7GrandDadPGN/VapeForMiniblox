@@ -686,6 +686,7 @@ function modifyCode(text) {
 			}
 
 			// Fly
+			let flyvalue, flyvert, flybypass;
 			const fly = new Module("Fly", function(callback) {
 				if (callback) {
 					let ticks = 0;
@@ -694,7 +695,7 @@ function modifyCode(text) {
 						const dir = getMoveDirection(0.39);
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = (ticks % 2 == 0 ? 0.01 : -0.01);
+						player$1.motion.y = keyPressedDump("space") ? flyvert[1] : (keyPressedDump("shift") ? -flyvert[1] : 0);
 					};
 				}
 				else {
@@ -705,6 +706,9 @@ function modifyCode(text) {
 					}
 				}
 			});
+			flybypass = fly.addoption("Bypass", Boolean, true);
+			flyvalue = fly.addoption("Speed", Number, 2);
+			flyvert = fly.addoption("Vertical", Number, 0.7);
 
 			// JumpFly
 			const jumpfly = new Module("JumpFly", function(callback) {
@@ -782,27 +786,27 @@ function modifyCode(text) {
 
 			function getItemStrength(stack) {
 				if (stack == null) return 0;
-				let base = 0;
-				const item = stack.getItem();
+				const itemBase = stack.getItem();
+				let base = 1;
 
-				if (item instanceof ItemSword) base = item.attackDamage;
-				else if (item instanceof ItemArmor) base = item.damageReduceAmountDump;
+				if (itemBase instanceof ItemSword) base += itemBase.attackDamage;
+				else if (itemBase instanceof ItemArmor) base += itemBase.damageReduceAmountDump;
 
 				const nbttaglist = stack.getEnchantmentTagList();
-				if (nbttaglist == null) return base;
+				if (nbttaglist != null) {
+					for (let i = 0; i < nbttaglist.length; ++i) {
+						const id = nbttaglist[i].id;
+						const lvl = nbttaglist[i].lvl;
 
-				for (let i = 0; i < nbttaglist.length; ++i) {
-					const id = nbttaglist[i].id;
-					const lvl = nbttaglist[i].lvl;
-
-					if (id == Enchantments.sharpness.effectId) base += lvl * 1.25;
-					else if (id == Enchantments.protection.effectId) base += Math.floor(((6 + lvl * lvl) / 3) * 0.75);
-					else if (id == Enchantments.efficiency.effectId) base += (lvl * lvl + 1);
-					else if (id == Enchantments.power.effectId) base += lvl;
-					else base += lvl * 0.1;
+						if (id == Enchantments.sharpness.effectId) base += lvl * 1.25;
+						else if (id == Enchantments.protection.effectId) base += Math.floor(((6 + lvl * lvl) / 3) * 0.75);
+						else if (id == Enchantments.efficiency.effectId) base += (lvl * lvl + 1);
+						else if (id == Enchantments.power.effectId) base += lvl;
+						else base += lvl * 0.01;
+					}
 				}
 
-				return base;
+				return base * stack.stackSize;
 			}
 
 			// AutoArmor
@@ -876,7 +880,7 @@ function modifyCode(text) {
 							for(let i = 0; i < player$1.openContainer.numRows * 9; i++) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
-								if (item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold)) {
+								if (item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold || item instanceof ItemBlock)) {
 									playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
@@ -945,8 +949,10 @@ function modifyCode(text) {
 
 							if (placeSide) {
 								const dir = placeSide.getOpposite().toVector();
+								const newDir = placeSide.toVector();
 								const placePosition = new BlockPos(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);
-								if (playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, new Vector3$1(pos.x, pos.y, pos.z))) hud3D.swingArm();
+								const hitVec = new Vector3$1(placePosition.x + (newDir.x != 0 ? Math.max(newDir.x, 0) : Math.random()), placePosition.y + (newDir.y != 0 ? Math.max(newDir.y, 0) : Math.random()), placePosition.z + (newDir.z != 0 ? Math.max(newDir.z, 0) : Math.random()));
+								if (playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, hitVec) hud3D.swingArm();
 								if (item.stackSize == 0) {
 									player$1.inventory.main[player$1.inventory.currentItem] = null;
 									return;
