@@ -32,11 +32,13 @@ function modifyCode(text) {
 	}
 
 	var newScript = document.createElement("script");
+	Object.defineProperty(newScript, 'enumerable', {value: false});
 	newScript.type = "module";
 	newScript.crossOrigin = "";
 	newScript.textContent = text;
 	var head = document.querySelector("head");
 	head.appendChild(newScript);
+	newScript.remove();
 }
 
 (function() {
@@ -1002,57 +1004,6 @@ function modifyCode(text) {
 	`);
 
 	let loadedConfig = false;
-
-	async function saveVapeConfig(profile) {
-		if (!loadedConfig) return;
-		let saveList = {};
-		for(const [name, module] of Object.entries(unsafeWindow.globalThis[modulesName])) {
-			saveList[name] = {enabled: module.enabled, bind: module.bind, options: {}};
-			for(const [option, setting] of Object.entries(module.options)) {
-				saveList[name].options[option] = setting[1];
-			}
-		}
-		GM_setValue("vapeConfig" + (profile ?? unsafeWindow.globalThis[profileName]), JSON.stringify(saveList));
-		GM_setValue("mainVapeConfig", JSON.stringify({profile: unsafeWindow.globalThis[profileName]}));
-	}
-
-	async function loadVapeConfig(switched) {
-		loadedConfig = false;
-		const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
-		unsafeWindow.globalThis[profileName] = switched ?? loadedMain.profile;
-		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
-		if (!loaded) {
-			loadedConfig = true;
-			return;
-		}
-
-		for(const [name, module] of Object.entries(loaded)) {
-			const realModule = unsafeWindow.globalThis[modulesName][name];
-			if (!realModule) continue;
-			if (realModule.enabled != module.enabled) realModule.toggle();
-			if (realModule.bind != module.bind) realModule.setbind(module.bind);
-			if (module.options) {
-				for(const [option, setting] of Object.entries(module.options)) {
-					const realOption = realModule.options[option];
-					if (!realOption) continue;
-					realOption[1] = setting;
-				}
-			}
-		}
-		loadedConfig = true;
-	}
-
-	async function importVapeConfig() {
-		const arg = await navigator.clipboard.readText();
-		if (!arg) return;
-		GM_setValue("vapeConfig" + unsafeWindow.globalThis[profileName], arg);
-		loadVapeConfig();
-	}
-
-	async function copyVapeConfig() {
-		navigator.clipboard.writeText(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
-	}
-
 	async function execute(src, oldScript) {
 		if (oldScript) oldScript.type = 'javascript/blocked';
 		await fetch(src).then(e => e.text()).then(e => modifyCode(e));
@@ -1065,10 +1016,52 @@ function modifyCode(text) {
 				}
 			}, 10);
 		});
-		unsafeWindow.globalThis[saveName] = saveVapeConfig;
-		unsafeWindow.globalThis[loadName] = loadVapeConfig;
-		unsafeWindow.globalThis[exportName] = copyVapeConfig;
-		unsafeWindow.globalThis[importName] = importVapeConfig;
+		unsafeWindow.globalThis[saveName] = async function(profile) {
+			if (!loadedConfig) return;
+			let saveList = {};
+			for(const [name, module] of Object.entries(unsafeWindow.globalThis[modulesName])) {
+				saveList[name] = {enabled: module.enabled, bind: module.bind, options: {}};
+				for(const [option, setting] of Object.entries(module.options)) {
+					saveList[name].options[option] = setting[1];
+				}
+			}
+			GM_setValue("vapeConfig" + (profile ?? unsafeWindow.globalThis[profileName]), JSON.stringify(saveList));
+			GM_setValue("mainVapeConfig", JSON.stringify({profile: unsafeWindow.globalThis[profileName]}));
+		};
+		unsafeWindow.globalThis[loadName] = async function(switched) {
+			loadedConfig = false;
+			const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
+			unsafeWindow.globalThis[profileName] = switched ?? loadedMain.profile;
+			const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
+			if (!loaded) {
+				loadedConfig = true;
+				return;
+			}
+
+			for(const [name, module] of Object.entries(loaded)) {
+				const realModule = unsafeWindow.globalThis[modulesName][name];
+				if (!realModule) continue;
+				if (realModule.enabled != module.enabled) realModule.toggle();
+				if (realModule.bind != module.bind) realModule.setbind(module.bind);
+				if (module.options) {
+					for(const [option, setting] of Object.entries(module.options)) {
+						const realOption = realModule.options[option];
+						if (!realOption) continue;
+						realOption[1] = setting;
+					}
+				}
+			}
+			loadedConfig = true;
+		};
+		unsafeWindow.globalThis[exportName] = async function() {
+			navigator.clipboard.writeText(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[profileName], "{}"));
+		};
+		unsafeWindow.globalThis[importName] = async function() {
+			const arg = await navigator.clipboard.readText();
+			if (!arg) return;
+			GM_setValue("vapeConfig" + unsafeWindow.globalThis[profileName], arg);
+			loadVapeConfig();
+		};
 		loadVapeConfig();
 		setInterval(async function() {
 			saveVapeConfig();
