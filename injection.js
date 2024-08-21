@@ -1014,7 +1014,7 @@ function modifyCode(text) {
 	async function loadVapeConfig(switched) {
 		loadedConfig = false;
 		const loadedMain = JSON.parse(await GM_getValue("mainVapeConfig", "{}")) ?? {profile: "default"};
-		unsafeWindow.globalThis[profileName] = switched ?? loadedMain.profile;
+		unsafeWindow.globalThis[storeName].profile = switched ?? loadedMain.profile;
 		const loaded = JSON.parse(await GM_getValue("vapeConfig" + unsafeWindow.globalThis[storeName].profile, "{}"));
 		if (!loaded) {
 			loadedConfig = true;
