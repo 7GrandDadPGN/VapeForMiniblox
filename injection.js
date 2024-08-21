@@ -1,3 +1,4 @@
+// when are you gonna add me on discord vector, we've been fighting for 2 weeks now, cmon, lets talk.
 let replacements = {};
 let dumpedVarNames = {};
 const storeName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
