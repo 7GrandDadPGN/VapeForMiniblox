@@ -2,6 +2,27 @@ let replacements = {};
 let dumpedVarNames = {};
 const storeName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
 
+// ANTICHEAT HOOK
+function replaceAndCopyFunction(oldFunc, newFunc) {
+	newFunc.toString = oldFunc.toString;
+	newFunc.prototype = oldFunc.prototype;
+	newFunc.hasOwnProperty = oldFunc.hasOwnProperty;
+	newFunc.constructor = oldFunc.constructor;
+	newFunc.name = oldFunc.name;
+	return function(arg1, arg2, arg3) {
+		return newFunc(oldFunc(arg1, arg2, arg3));
+	};
+}
+
+Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, function(result) {
+	if (result.indexOf(storeName) != 1) result.splice(result.indexOf(storeName), 1);
+	return result;
+});
+Object.getOwnPropertyDescriptors = replaceAndCopyFunction(Object.getOwnPropertyDescriptors, function(result) {
+	if (result.indexOf(storeName) != 1) result.splice(result.indexOf(storeName), 1);
+	return result;
+});
+
 function addReplacement(replacement, code, replaceit) {
 	replacements[replacement] = [code, replaceit];
 }
