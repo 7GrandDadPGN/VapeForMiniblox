@@ -2,17 +2,17 @@
 let replacements = {};
 let dumpedVarNames = {};
 const storeName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
-
 // ANTICHEAT HOOK
 function replaceAndCopyFunction(oldFunc, newFunc) {
-	newFunc.toString = oldFunc.toString;
-	newFunc.prototype = oldFunc.prototype;
-	newFunc.hasOwnProperty = oldFunc.hasOwnProperty;
-	newFunc.constructor = oldFunc.constructor;
-	newFunc.name = oldFunc.name;
-	return function(arg1, arg2, arg3) {
+	const replacementFunc = function(arg1, arg2, arg3) {
 		return newFunc(oldFunc(arg1, arg2, arg3));
 	};
+	replacementFunc.toString = oldFunc.toString;
+	replacementFunc.prototype = oldFunc.prototype;
+	replacementFunc.hasOwnProperty = oldFunc.hasOwnProperty;
+	replacementFunc.constructor = oldFunc.constructor;
+	replacementFunc.name = oldFunc.name;
+	return replacementFunc;
 }
 
 Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, function(result) {
