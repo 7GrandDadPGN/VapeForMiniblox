@@ -9,10 +9,10 @@ function replaceAndCopyFunction(oldFunc, newFunc) {
 		newFunc(result);
 		return result;
 	};
-	replacementFunc.toString = oldFunc.toString;
-	replacementFunc.hasOwnProperty = oldFunc.hasOwnProperty;
-	replacementFunc.constructor = oldFunc.constructor;
-	replacementFunc.name = oldFunc.name;
+	replacementFunc.toString = oldFunc.toString.bind(oldFunc);
+	replacementFunc.hasOwnProperty = oldFunc.hasOwnProperty.bind(oldFunc);
+	replacementFunc.constructor = oldFunc.constructor.bind(oldFunc);
+	Object.defineProperty(replacementFunc, "name", {value: oldFunc.name});
 	return replacementFunc;
 }
 
