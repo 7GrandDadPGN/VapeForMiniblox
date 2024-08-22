@@ -50,12 +50,12 @@ function modifyCode(text) {
 	}
 
 	var newScript = document.createElement("script");
-	Object.defineProperty(newScript, 'enumerable', {value: false});
 	newScript.type = "module";
 	newScript.crossOrigin = "";
 	newScript.textContent = text;
 	var head = document.querySelector("head");
 	head.appendChild(newScript);
+	newScript.textContent = "";
 	newScript.remove();
 }
 
