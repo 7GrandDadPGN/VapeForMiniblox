@@ -1,27 +1,28 @@
-// when are you gonna add me on discord vector, we've been fighting for 2 weeks now, cmon, lets talk.
 let replacements = {};
 let dumpedVarNames = {};
 const storeName = "a" + crypto.randomUUID().replaceAll("-", "").substring(16);
+
 // ANTICHEAT HOOK
 function replaceAndCopyFunction(oldFunc, newFunc) {
-	const replacementFunc = function(arg1, arg2, arg3) {
-		return newFunc(oldFunc(arg1, arg2, arg3));
+	const replacementFunc = function(...args) {
+		const result = oldFunc.apply(this, args);
+		newFunc(result);
+		return result;
 	};
 	replacementFunc.toString = oldFunc.toString;
-	replacementFunc.prototype = oldFunc.prototype;
 	replacementFunc.hasOwnProperty = oldFunc.hasOwnProperty;
 	replacementFunc.constructor = oldFunc.constructor;
 	replacementFunc.name = oldFunc.name;
 	return replacementFunc;
 }
 
-Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, function(result) {
-	if (result.indexOf(storeName) != 1) result.splice(result.indexOf(storeName), 1);
-	return result;
+Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, function(list) {
+	if (list.indexOf(storeName) != -1) list.splice(list.indexOf(storeName), 1);
+	return list;
 });
-Object.getOwnPropertyDescriptors = replaceAndCopyFunction(Object.getOwnPropertyDescriptors, function(result) {
-	delete result[storeName];
-	return result;
+Object.getOwnPropertyDescriptors = replaceAndCopyFunction(Object.getOwnPropertyDescriptors, function(list) {
+	delete list[storeName];
+	return list;
 });
 
 function addReplacement(replacement, code, replaceit) {
