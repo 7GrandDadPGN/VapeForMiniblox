@@ -427,6 +427,11 @@ function modifyCode(text) {
 				for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
 				game$1.chat.addChat({text: str});
 				return;
+			case ".binds":
+				let str = "Bind List\\n";
+				for(const [name, module] of Object.entries(modules)) str += "\\n" + name + " : " + (module.bind != "" ? module.bind : "none");
+				game$1.chat.addChat({text: str});
+				return;
 			case ".setoption": {
 				const module = args.length > 1 && getModule(args[1]);
 				if (module) {
@@ -757,7 +762,7 @@ function modifyCode(text) {
 			new Module("NoSlowdown", function() {});
 
 			// Speed
-			let speedvalue, speedjump;
+			let speedvalue, speedjump, speedauto;
 			const speed = new Module("Speed", function(callback) {
 				if (callback) {
 					let lastjump = 10;
@@ -768,13 +773,14 @@ function modifyCode(text) {
 						lastjump = player$1.onGround ? 0 : lastjump;
 						player$1.motion.x = dir.x;
 						player$1.motion.z = dir.z;
-						player$1.motion.y = player$1.onGround && dir.length() > 0 ? speedjump[1] : player$1.motion.y;
+						player$1.motion.y = player$1.onGround && dir.length() > 0 && speedauto[1] ? speedjump[1] : player$1.motion.y;
 					};
 				}
 				else delete tickLoop["Speed"];
 			});
 			speedvalue = speed.addoption("Speed", Number, 0.9);
 			speedjump = speed.addoption("JumpHeight", Number, 0.42);
+			speedauto = speed.addoption("AutoJump", Boolean, true);
 
 			const step = new Module("Step", function() {});
 			stepheight = step.addoption("Height", Number, 2);
