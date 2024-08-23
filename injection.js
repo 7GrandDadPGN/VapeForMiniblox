@@ -970,7 +970,7 @@ function modifyCode(text) {
 									let closest = 999;
 									for(let x = -5; x < 5; ++x) {
 										for (let z = -5; z < 5; ++z) {
-											const newPos = new BlockPos(pos.x + x, pos.y + y, pos.z + z);
+											const newPos = new BlockPos(pos.x + x, pos.y, pos.z + z);
 											const checkNearby = getPossibleSides(newPos);
 											if (checkNearby) {
 												const newDist = player$1.pos.distanceTo(new Vector3$1(newPos.x, newPos.y, newPos.z));
