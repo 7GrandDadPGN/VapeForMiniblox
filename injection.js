@@ -301,6 +301,12 @@ function modifyCode(text) {
 	addReplacement('ut(this,"controller");', 'ut(this, "tickLoop");');
 	addReplacement('setInterval(()=>this.fixedUpdate(),MSPT)', 'this.tickLoop=setInterval(()=>this.fixedUpdate(),MSPT)', true);
 
+	// PHASE
+	addReplacement('calculateXOffset(ft,this.getEntityBoundingBox(),tt.x)', 'enabledModules["Phase"] ? tt.x : calculateXOffset(ft,this.getEntityBoundingBox(),tt.x)', true);
+	addReplacement('calculateYOffset(ft,this.getEntityBoundingBox(),tt.y)', 'enabledModules["Phase"] && keyPressedDump("shift") ? tt.y : calculateYOffset(ft,this.getEntityBoundingBox(),tt.y)', true);
+	addReplacement('calculateZOffset(ft,this.getEntityBoundingBox(),tt.z)', 'enabledModules["Phase"] ? tt.z : calculateZOffset(ft,this.getEntityBoundingBox(),tt.z)', true);
+	addReplacement('pushOutOfBlocks(_,$,et){', 'if (enabledModules["Phase"]) return;');
+
 	// AUTORESPAWN
 	addReplacement('this.game.info.showSignEditor=null,exitPointerLock())', `
 		if (this.showDeathScreen && enabledModules["AutoRespawn"]) {
@@ -555,7 +561,7 @@ function modifyCode(text) {
 			let attackedPlayers = {};
 			let attackList = [];
 			let boxMeshes = [];
-			let killaurarange, killaurablock, killaurabox, killauraangle, killaurawall;
+			let killaurarange, killaurablock, killaurabox, killauraangle, killaurawall, killauraitem;
 
 			function wrapAngleTo180_radians(j) {
 				return j = j % (2 * Math.PI),
@@ -595,10 +601,14 @@ function modifyCode(text) {
 				}
 			}
 
+			function swordCheck() {
+				const item = player$1.inventory.getCurrentItem();
+				return item && item.getItem() instanceof ItemSword;
+			}
+
 			function block() {
 				if (attackDelay < Date.now()) attackDelay = Date.now() + (Math.round(attacked / 2) * 100);
-				const item = player$1.inventory.getCurrentItem();
-				if (item && item.getItem() instanceof ItemSword && killaurablock[1]) {
+				if (swordCheck() && killaurablock[1]) {
 					if (!blocking) {
 						playerControllerMP.syncItemDump();
 						ClientSocket.sendPacket(new SPacketUseItem);
@@ -608,8 +618,7 @@ function modifyCode(text) {
 			}
 
 			function unblock() {
-				const item = player$1.inventory.getCurrentItem();
-				if (blocking && item && item.getItem() instanceof ItemSword) {
+				if (blocking && swordCheck()) {
 					playerControllerMP.syncItemDump();
 					ClientSocket.sendPacket(new SPacketPlayerAction({
 						position: BlockPos.ORIGIN.toProto(),
@@ -646,14 +655,16 @@ function modifyCode(text) {
 						const entities = game$1.world.entitiesDump;
 
 						attackList = [];
-						for (const entity of entities.values()) {
-							if (entity.id == player$1.id) continue;
-							const newDist = player$1.getDistanceSqToEntity(entity);
-							if (newDist < (killaurarange[1] * killaurarange[1]) && entity instanceof EntityPlayer) {
-								if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
-								if (localTeam && localTeam == getTeam(entity)) continue;
-								if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
-								attackList.push(entity);
+						if (!killauraitem[1] || swordCheck()) {
+							for (const entity of entities.values()) {
+								if (entity.id == player$1.id) continue;
+								const newDist = player$1.getDistanceSqToEntity(entity);
+								if (newDist < (killaurarange[1] * killaurarange[1]) && entity instanceof EntityPlayer) {
+									if (entity.mode.isSpectator() || entity.mode.isCreative() || entity.isInvisibleDump()) continue;
+									if (localTeam && localTeam == getTeam(entity)) continue;
+									if (killaurawall[1] && !player$1.canEntityBeSeen(entity)) continue;
+									attackList.push(entity);
+								}
 							}
 						}
 
@@ -696,6 +707,7 @@ function modifyCode(text) {
 			killaurablock = killaura.addoption("AutoBlock", Boolean, true);
 			killaurawall = killaura.addoption("Wallcheck", Boolean, false);
 			killaurabox = killaura.addoption("Box", Boolean, true);
+			killauraitem = killaura.addoption("LimitToSword", Boolean, false);
 
 			new Module("FastBreak", function() {});
 
@@ -901,14 +913,15 @@ function modifyCode(text) {
 				else delete tickLoop["AutoCraft"];
 			});
 
-			new Module("ChestSteal", function(callback) {
+			let cheststealblocks, cheststealtools;
+			const cheststeal = new Module("ChestSteal", function(callback) {
 				if (callback) {
 					tickLoop["ChestSteal"] = function() {
 						if (player$1.openContainer && player$1.openContainer instanceof ContainerChest) {
 							for(let i = 0; i < player$1.openContainer.numRows * 9; i++) {
 								const slot = player$1.openContainer.inventorySlots[i];
 								const item = slot.getHasStack() ? slot.getStack().getItem() : null;
-								if (item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold || item instanceof ItemBlock)) {
+								if (item && (item instanceof ItemSword || item instanceof ItemArmor || item instanceof ItemAppleGold || cheststealblocks[1] && item instanceof ItemBlock || cheststealtools[1] && item instanceof ItemTool)) {
 									playerControllerDump.windowClickDump(player$1.openContainer.windowId, i, 0, 1, player$1);
 								}
 							}
@@ -917,8 +930,9 @@ function modifyCode(text) {
 				}
 				else delete tickLoop["ChestSteal"];
 			});
+			cheststealblocks = cheststeal.addoption("Blocks", Boolean, true);
+			cheststealtools = cheststeal.addoption("Tools", Boolean, false);
 
-			let oldHeld;
 
 			function getPossibleSides(pos) {
 				for(const side of EnumFacing.VALUES) {
@@ -932,7 +946,8 @@ function modifyCode(text) {
 				game$1.info.selectedSlot = slot;
 			}
 
-			new Module("Scaffold", function(callback) {
+			let scaffoldtower, oldHeld;
+			const scaffold = new Module("Scaffold", function(callback) {
 				if (callback) {
 					if (player$1) oldHeld = game$1.info.selectedSlot;
 					tickLoop["Scaffold"] = function() {
@@ -955,7 +970,7 @@ function modifyCode(text) {
 									let closest = 999;
 									for(let x = -5; x < 5; ++x) {
 										for (let z = -5; z < 5; ++z) {
-											const newPos = new BlockPos(pos.x + x, pos.y, pos.z + z);
+											const newPos = new BlockPos(pos.x + x, pos.y + y, pos.z + z);
 											const checkNearby = getPossibleSides(newPos);
 											if (checkNearby) {
 												const newDist = player$1.pos.distanceTo(new Vector3$1(newPos.x, newPos.y, newPos.z));
@@ -980,6 +995,7 @@ function modifyCode(text) {
 								const newDir = placeSide.toVector();
 								const placePosition = new BlockPos(pos.x + dir.x, pos.y + dir.y, pos.z + dir.z);
 								const hitVec = new Vector3$1(placePosition.x + (newDir.x != 0 ? Math.max(newDir.x, 0) : Math.random()), placePosition.y + (newDir.y != 0 ? Math.max(newDir.y, 0) : Math.random()), placePosition.z + (newDir.z != 0 ? Math.max(newDir.z, 0) : Math.random()));
+								if (scaffoldtower[1] && keyPressedDump("space") && dir.y == -1 && player$1.motion.y < 0.2 && player$1.motion.y > 0.15) player$1.motion.y = 0.42;
 								if (playerControllerDump.onPlayerRightClick(player$1, game$1.world, item, placePosition, placeSide, hitVec)) hud3D.swingArm();
 								if (item.stackSize == 0) {
 									player$1.inventory.main[player$1.inventory.currentItem] = null;
@@ -994,6 +1010,7 @@ function modifyCode(text) {
 					delete tickLoop["Scaffold"];
 				}
 			});
+			scaffoldtower = scaffold.addoption("Tower", Boolean, true);
 
 			function reloadTickLoop(value) {
 				if (game$1.tickLoop) {
@@ -1008,6 +1025,7 @@ function modifyCode(text) {
 				reloadTickLoop(callback ? 50 / timervalue[1] : 50);
 			});
 			timervalue = timer.addoption("Value", Number, 1.2);
+			new Module("Phase", function() {});
 
 			const antiban = new Module("AntiBan", function() {});
 			antiban.toggle();
