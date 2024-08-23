@@ -400,6 +400,7 @@ function modifyCode(text) {
 	addReplacement('tryExecuteClientside(et,_))return;', `
 		const str = $.toLocaleLowerCase();
 		const args = str.split(" ");
+		let chatString;
 		switch (args[0]) {
 			case ".bind": {
 				const module = args.length > 2 && getModule(args[1]);
@@ -423,22 +424,22 @@ function modifyCode(text) {
 				}
 				return;
 			case ".modules":
-				let str = "Module List\\n";
-				for(const [name, module] of Object.entries(modules)) str += "\\n" + name;
-				game$1.chat.addChat({text: str});
+				chatString = "Module List\\n";
+				for(const [name, module] of Object.entries(modules)) chatString += "\\n" + name;
+				game$1.chat.addChat({text: chatString});
 				return;
 			case ".binds":
-				let str = "Bind List\\n";
-				for(const [name, module] of Object.entries(modules)) str += "\\n" + name + " : " + (module.bind != "" ? module.bind : "none");
-				game$1.chat.addChat({text: str});
+				chatString = "Bind List\\n";
+				for(const [name, module] of Object.entries(modules)) chatString += "\\n" + name + " : " + (module.bind != "" ? module.bind : "none");
+				game$1.chat.addChat({text: chatString});
 				return;
 			case ".setoption": {
 				const module = args.length > 1 && getModule(args[1]);
 				if (module) {
 					if (args.length < 3) {
-						let str = module.name + " Options";
-						for(const [name, value] of Object.entries(module.options)) str += "\\n" + name + " : " + value[0].name + " : " + value[1];
-						game$1.chat.addChat({text: str});
+						chatString = module.name + " Options";
+						for(const [name, value] of Object.entries(module.options)) chatString += "\\n" + name + " : " + value[0].name + " : " + value[1];
+						game$1.chat.addChat({text: chatString});
 						return;
 					}
 
