@@ -11,7 +11,7 @@ function replaceAndCopyFunction(oldFunc, newFunc) {
 			newFunc(result);
 			return result;
 		},
-		get(orig, prop) { return orig; }
+		get(orig) { return orig; }
 	});
 }
 
