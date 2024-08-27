@@ -5,16 +5,13 @@ const vapeName = crypto.randomUUID().replaceAll("-", "").substring(16);
 
 // ANTICHEAT HOOK
 function replaceAndCopyFunction(oldFunc, newFunc) {
-	const replacementFunc = function(...args) {
-		const result = oldFunc.apply(this, args);
-		newFunc(result);
-		return result;
-	};
-	replacementFunc.toString = oldFunc.toString.bind(oldFunc);
-	replacementFunc.hasOwnProperty = oldFunc.hasOwnProperty.bind(oldFunc);
-	replacementFunc.constructor = oldFunc.constructor.bind(oldFunc);
-	Object.defineProperty(replacementFunc, "name", {value: oldFunc.name});
-	return replacementFunc;
+	return new Proxy(oldFunc, {
+		apply(orig, origIden, origArgs) {
+			const result = orig.apply(origIden, origArgs);
+			newFunc(result);
+			return result;
+		}
+	});
 }
 
 Object.getOwnPropertyNames = replaceAndCopyFunction(Object.getOwnPropertyNames, function(list) {
@@ -101,7 +98,7 @@ function modifyCode(text) {
 		let tickLoop = {};
 		let renderTickLoop = {};
 
-		let lastJoined, velocityhori, velocityvert, chatdisablermsg, attackedEntity, stepheight;
+		let lastJoined, velocityhori, velocityvert, chatdisablermsg, textguifont, textguisize, textguishadow, attackedEntity, stepheight;
 		let attackTime = Date.now();
 		let chatDelay = Date.now();
 
@@ -120,7 +117,7 @@ function modifyCode(text) {
 		});
 	`);
 
-	addReplacement('VERSION$1," | ",', `"${vapeName} v1.0.4"," | ",`);
+	addReplacement('VERSION$1," | ",', `"${vapeName} v1.0.5"," | ",`);
 	addReplacement('if(!nt.canConnect){', 'nt.errorMessage = nt.errorMessage == "Could not join server. You are connected to a VPN or proxy. Please disconnect from it and refresh the page." ? "You\'re either using a detected VPN server or IP banned for cheating." : nt.errorMessage;');
 
 	// DRAWING SETUP
@@ -157,7 +154,7 @@ function modifyCode(text) {
 
 	// TEXT GUI
 	addReplacement('(this.drawSelectedItemStack(),this.drawHintBox())', `
-		if (ctx$3) {
+		if (ctx$3 && enabledModules["TextGUI"]) {
 			const colorOffset = (Date.now() / 4000);
 			const posX = 15;
 			const posY = 17;
@@ -169,7 +166,7 @@ function modifyCode(text) {
 			let offset = 0;
 			let stringList = [];
 			for(const [module, value] of Object.entries(enabledModules)) {
-				if (!value) continue;
+				if (!value || module == "TextGUI") continue;
 				stringList.push(module);
 			}
 
@@ -181,7 +178,7 @@ function modifyCode(text) {
 
 			for(const module of stringList) {
 				offset++;
-				drawText(ctx$3, module, posX + 6, posY + 12 + (18 * offset), "15px arial", \`HSL(\${((colorOffset - (0.025 * offset)) % 1) * 360}, 100%, 50%)\`, "left", "top", 1, !0);
+				drawText(ctx$3, module, posX + 6, posY + 12 + ((textguisize[1] + 3) * offset), textguisize[1] + "px " + textguifont[1], \`HSL(\${((colorOffset - (0.025 * offset)) % 1) * 360}, 100%, 50%)\`, "left", "top", 1, textguishadow[1]);
 			}
 		}
 	`);
@@ -208,14 +205,16 @@ function modifyCode(text) {
 		if (player$1 && $.text && !$.text.startsWith(player$1.name) && enabledModules["ChatDisabler"] && chatDelay < Date.now()) {
 			chatDelay = Date.now() + 1000;
 			setTimeout(function() {
-				ClientSocket.sendPacket(new SPacketMessage({
-					text: Math.random() + ("\\n" + chatdisablermsg[1]).repeat(20)
-				}));
+				ClientSocket.sendPacket(new SPacketMessage({text: Math.random() + ("\\n" + chatdisablermsg[1]).repeat(20)}));
 			}, 50);
 		}
 
 		if ($.text && $.text.startsWith("\\\\bold\\\\How to play:")) {
 			breakStart = Date.now() + 25000;
+		}
+
+		if ($.text && $.text.indexOf("Poll started") != -1 && $.id == undefined && enabledModules["AutoVote"]) {
+			ClientSocket.sendPacket(new SPacketMessage({text: "/vote 2"}));
 		}
 
 		if ($.text && $.text.indexOf("won the game") != -1 && $.id == undefined && enabledModules["AutoQueue"]) {
@@ -554,6 +553,20 @@ function modifyCode(text) {
 			// WTap
 			new Module("WTap", function() {});
 
+			// AntiVoid
+			new Module("AntiFall", function(callback) {
+				if (callback) {
+					let ticks = 0;
+					tickLoop["AntiFall"] = function() {
+        				const ray = rayTraceBlocks(player$1.getEyePos(), player$1.getEyePos().clone().setY(0), false, false, false, game$1.world);
+						if (player$1.fallDistance > 2.8 && !ray) {
+							player$1.motion.y = 0;
+						}
+					};
+				}
+				else delete tickLoop["AntiFall"];
+			});
+
 			// Killaura
 			let attackDelay = Date.now();
 			let didSwing = false;
@@ -749,30 +762,24 @@ function modifyCode(text) {
 			flyvalue = fly.addoption("Speed", Number, 2);
 			flyvert = fly.addoption("Vertical", Number, 0.7);
 
-			// JumpFly
-			const jumpfly = new Module("JumpFly", function(callback) {
-				if (callback) {
-					let ticks = 0;
-					tickLoop["JumpFly"] = function() {
-						ticks++;
-						const dir = getMoveDirection(0.39);
-						player$1.motion.x = dir.x;
-						player$1.motion.z = dir.z;
-						player$1.motion.y = (ticks < 18 && ticks % 6 < 4 ? 4 : -0.27);
-					};
-				}
-				else {
-					delete tickLoop["JumpFly"];
-					if (player$1) {
-						player$1.motion.x = Math.max(Math.min(player$1.motion.x, 0.3), -0.3);
-						player$1.motion.z = Math.max(Math.min(player$1.motion.z, 0.3), -0.3);
-					}
-				}
-			});
-
 			new Module("InvWalk", function() {});
 			new Module("KeepSprint", function() {});
 			new Module("NoSlowdown", function() {});
+
+			// NoFall
+			new Module("NoFall", function(callback) {
+				if (callback) {
+					let ticks = 0;
+					tickLoop["NoFall"] = function() {
+        				const ray = rayTraceBlocks(player$1.getEyePos(), player$1.getEyePos().clone().setY(0), false, false, false, game$1.world);
+						if (player$1.fallDistance > 2.5 && ray) {
+							ClientSocket.sendPacket(new SPacketPlayerPosLook({pos: {x: player$1.pos.x, y: ray.hitVec.y, z: player$1.pos.z}, onGround: true}));
+							player$1.fallDistance = 0;
+						}
+					};
+				}
+				else delete tickLoop["NoFall"];
+			});
 
 			// Speed
 			let speedvalue, speedjump, speedauto;
@@ -799,6 +806,11 @@ function modifyCode(text) {
 			stepheight = step.addoption("Height", Number, 2);
 
 			new Module("Chams", function() {});
+			const textgui = new Module("TextGUI", function() {});
+			textguifont = textgui.addoption("Font", String, "Arial");
+			textguisize = textgui.addoption("TextSize", Number, 15);
+			textguishadow = textgui.addoption("Shadow", Boolean, true);
+			textgui.toggle();
 			new Module("AutoRespawn", function() {});
 
 			// Breaker
@@ -953,7 +965,7 @@ function modifyCode(text) {
 					tickLoop["Scaffold"] = function() {
 						for(let i = 0; i < 9; i++) {
 							const item = player$1.inventory.main[i];
-							if (item && item.item instanceof ItemBlock) {
+							if (item && item.item instanceof ItemBlock && item.item.block.getBoundingBox().max.y == 1 && item.item.name != "tnt") {
 								switchSlot(i);
 								break;
 							}
@@ -1031,6 +1043,7 @@ function modifyCode(text) {
 			antiban.toggle();
 			new Module("AutoRejoin", function() {});
 			new Module("AutoQueue", function() {});
+			new Module("AutoVote", function() {});
 			const chatdisabler = new Module("ChatDisabler", function() {});
 			chatdisablermsg = chatdisabler.addoption("Message", String, "youtube.com/c/7GrandDadVape");
 			new Module("FilterBypass", function() {});
