@@ -10,7 +10,8 @@ function replaceAndCopyFunction(oldFunc, newFunc) {
 			const result = orig.apply(origIden, origArgs);
 			newFunc(result);
 			return result;
-		}
+		},
+		get(orig, prop) { return orig; }
 	});
 }
 
