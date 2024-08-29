@@ -289,9 +289,6 @@ function modifyCode(text) {
 		if (enabledModules["WTap"]) player$1.serverSprintState = false;
 	`);
 
-	// FASTBREAK
-	addReplacement('_&&player$1.mode.isCreative()', `||enabledModules["FastBreak"]`);
-
 	// INVWALK
 	addReplacement('keyPressed(j)&&Game.isActive(!1)', 'keyPressed(j)&&(Game.isActive(!1)||enabledModules["InvWalk"]&&!game.chat.showInput)', true);
 
@@ -722,8 +719,6 @@ function modifyCode(text) {
 			killaurawall = killaura.addoption("Wallcheck", Boolean, false);
 			killaurabox = killaura.addoption("Box", Boolean, true);
 			killauraitem = killaura.addoption("LimitToSword", Boolean, false);
-
-			new Module("FastBreak", function() {});
 
 			function getMoveDirection(moveSpeed) {
 				let moveStrafe = player$1.moveStrafeDump;
